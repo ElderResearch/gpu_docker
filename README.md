@@ -20,5 +20,5 @@ until we have set up a nightly or automated build, please take care to increment
 
 for now the process should be roughly as follows: for each image in the dependency chain of the "innermost" docker image you have updated,
 
-1. `docker build --no-cache -t IMAGE_TAG_NAME:vX.Y.Z .`
-1. `docker tag NEWSHANUMBER IMAGE_TAG_NAME:latest`
+1. `docker build --no-cache -t IMAGE_TAG_NAME .`
+1. `docker tag NEWSHANUMBER IMAGE_TAG_NAME:vX.Y.Z`
