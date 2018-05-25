@@ -1,5 +1,8 @@
 FROM lambdastack:latest
 
+# make python 3 the default
+RUN ln -s -f /usr/bin/python3 /usr/bin/python
+
 # installing a ton of python shiz. "hard" stuff via apt, stuff we want to
 # be relatively fresh via pip3
 RUN apt install --no-install-recommends --yes python3-setuptools
@@ -10,6 +13,7 @@ RUN apt install --no-install-recommends --yes python3-tk
 RUN pip3 install boto3 \
                  cssselect \
                  jupyter \
+                 keras \
                  lxml \
                  neo4j-driver \
                  networkx \
