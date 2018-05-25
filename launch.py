@@ -227,6 +227,6 @@ if __name__ == '__main__':
     args = parse_args()
     launch(
         username=args.username,
-        imagetype=args.imagetype
+        imagetype=args.imagetype,
         jupyter_pwd=args.jupyter_pwd
     )
