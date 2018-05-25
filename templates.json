@@ -1,0 +1,21 @@
+[
+  {
+    "type": "container",
+    "title": "eri_dev",
+    "description": "eri developmenet container",
+    "name": "eri dev",
+    "env": [
+      {
+        "name": "username",
+        "label": "your linux system username (contact admin if you don't know what it is)"
+      }
+    ],
+    "restart_policy": "no",
+    "note": "use this template to initalize a new user-level development container <em>(don't use more than once! go find your personalized container on the containers tab to restart in the future)</em>",
+    "logo": "https://image.freepik.com/free-vector/under-construction_23-2147503830.jpg",
+    "image": "eri_dev:latest",
+    "ports": [
+      "8888/tcp"
+    ]
+  }
+]
