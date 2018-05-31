@@ -16,6 +16,18 @@
     "image": "eri_dev:latest",
     "ports": [
       "8888/tcp"
-    ]
+  ],
+  "volumes": [
+      {
+          "container": "/etc/group",
+          "bind": "/etc/group",
+          "readonly": true
+      },
+      {
+          "container": "/etc/passwd",
+          "bind": "/etc/passwd",
+          "readonly": true
+      }
+  ]
   }
 ]
