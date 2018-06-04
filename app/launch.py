@@ -14,12 +14,20 @@ Usage:
 
 """
 
+import argparse
+import copy
+import datetime
+import collections
+import hashlib
 import logging
 import os
 import pwd
 
+import dateutil.parser
 import docker
 import notebook.auth
+import psutil
+import pytz
 
 
 # ----------------------------- #
@@ -30,20 +38,31 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 
 GPU_DEV = 'gpu_dev'
 GPU_PROD = 'gpu_prod'
+NO_GPU_DEV = 'no_gpu_dev'
 ERI_IMAGES = {
     GPU_DEV: {
         'image': 'eri_dev:latest',
         'auto_remove': True,
         'detach': True,
         'ports': {8888: 8889},
+        'NV_GPU': '0',
     },
     GPU_PROD: {
         'image': 'eri_prod:latest',
         'auto_remove': True,
         'detach': True,
         'ports': {8888: 8888},
+        'NV_GPU': '1',
+    },
+    NO_GPU_DEV: {
+        'image': 'eri_nogpu_dev:latest',
+        'auto_remove': True,
+        'detach': True,
+        'ports': 'auto',
     },
 }
+GPU_IMAGES = [GPU_DEV, GPU_PROD]
+JUPYTER_IMAGES = [GPU_DEV, GPU_PROD, NO_GPU_DEV]
 SUCCESS = 'success'
 FAILURE = 'failure'
 
@@ -62,9 +81,78 @@ def _error(msg):
     }
 
 
-def _running_images(client=None):
-    client = client or docker.from_env()
+def _image_lookup(k, v):
+    """iterate through ERI_IMAGES and return the internal tag and dictionary
+    for the first item that contains key k with value v
+
+    """
+    for imagetag, imagedict in ERI_IMAGES.items():
+        if k in imagedict and imagedict[k] == v:
+            return imagetag, imagedict
+
+    return None, None
+
+
+def _running_images(client=None, ignore_other_images=False):
     return [tag for c in client.containers.list() for tag in c.image.tags]
+
+
+def _env_lookup(c, key):
+    """try and pull out the environment variable within container c"""
+    try:
+        for entry in c.attrs['Config']['Env']:
+            i = entry.find('=')
+            k = entry[:i]
+            v = entry[i + 1:]
+            if k == key:
+                return v
+    except:
+        return None
+
+
+def active_eri_images(client=None, ignore_other_images=False):
+    client = client or docker.from_env()
+    active = []
+
+    for c in client.containers.list():
+        image = c.image.tags[0]
+        imagetype, imagedict = _image_lookup('image', image)
+
+        if ignore_other_images and (imagetype is None):
+            continue
+
+        d = {
+            'image': image,
+            'imagetype': imagetype,
+            'id': c.id,
+        }
+        if imagetype in JUPYTER_IMAGES:
+            # go get the actual mapped port (dynamically allocated for non-gpu
+            # dev boxes)
+            port = int(
+                c.attrs['HostConfig']['PortBindings']['8888/tcp'][0]['HostPort']
+            )
+
+            d['jupyter_url'] = 'http://eri-gpu:{}'.format(port)
+
+            # go get the environment variable password and hash it
+            pw = _env_lookup(c, 'PASSWORD')
+            d['pwhash'] = hashlib.md5(pw.encode()).hexdigest()
+
+        # check for a username environment variable
+        d['username'] = _env_lookup(c, 'USER')
+
+        # uptime
+        try:
+            t0 = dateutil.parser.parse(c.attrs['Created']).astimezone()
+            t1 = datetime.datetime.now(tz=pytz.timezone('US/Eastern'))
+            d['uptime'] = str(t1 - t0)
+        except Exception as e:
+            d['uptime'] = str(e)
+
+        active.append(d)
+
+    return active
 
 
 def _validate_launch(imagetype=GPU_DEV, client=None):
@@ -93,9 +181,28 @@ def _validate_launch(imagetype=GPU_DEV, client=None):
             )
         else:
             return True, None
+    elif imagetype in ERI_IMAGES:
+        return True, None
 
     # not defined
     return False, "imagetype {} not handled yet".format(imagetype)
+
+
+def _update_environment(imagedict, key, val):
+    """update the environment variable param in imagedict
+
+    the imagedict dictionary doesn't necessarily have an environment key and
+    value on launch, *and furthermore* this is complicated by the fact that
+    the value for environment could be a list or a dictionary, so we have to do
+    some bullshit
+
+    """
+    env = imagedict.get('environment', {})
+    if isinstance(env, dict):
+        env[key] = val
+    else:
+        env.append('{}={}'.format(key, val))
+    imagedict['environment'] = env
 
 
 def _setup_jupyter_password(imagedict, jupyter_pwd=None):
@@ -105,16 +212,25 @@ def _setup_jupyter_password(imagedict, jupyter_pwd=None):
 
     # the neighboring jupyter_notebook_config.py file will look for an
     # environment variable PASSWORD, so we need to set that in our container
-    # this is complicated by the fact that environment could be a list or a
-    # dictionary, so we have to do some bullshit
-    env = imagedict.get('environment', {})
-    if isinstance(env, dict):
-        env['PASSWORD'] = jupyter_pwd
-    else:
-        env.append('PASSWORD={}'.format(jupyter_pwd))
-    imagedict['environment'] = env
+    _update_environment(imagedict, 'PASSWORD', jupyter_pwd)
 
     return True, None
+
+
+def _find_open_port(start=8890, stop=9000):
+    used_ports = {
+        connection.laddr.port
+        for connection in psutil.net_connections()
+    }
+
+    for port in range(start, stop + 1):
+        if port not in used_ports:
+            return port, None
+
+    return (
+        False,
+        "unable to allocate open port between {} and {}".format(start, stop)
+    )
 
 
 def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
@@ -139,7 +255,7 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
     """
     # is this image type defined (could just check image names directly...)
     try:
-        imagedict = ERI_IMAGES[imagetype]
+        imagedict = copy.deepcopy(ERI_IMAGES[imagetype])
     except KeyError:
         return _error("image type '{}' is not defined".format(imagetype))
 
@@ -153,7 +269,10 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
     try:
         p = pwd.getpwnam(username)
         imagedict['user'] = '{p.pw_uid}:{p.pw_gid}'.format(p=p)
-        print(imagedict['user'])
+
+        # add the user's name as an environment variable. for shits and gigs,
+        # but also because it helps us build our webapp down the line
+        _update_environment(imagedict, 'USER', username)
     except KeyError:
         msg = "user '{}' does not exist on this system; contact administrators"
         msg = msg.format(username)
@@ -167,11 +286,20 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
         msg = msg.format(username)
         return _error(msg)
 
-    # configure the jupyter notebook password if needed
-    if imagetype in [GPU_DEV, GPU_PROD]:
+    if imagetype in JUPYTER_IMAGES:
+        # configure the jupyter notebook password if needed
         success, msg = _setup_jupyter_password(imagedict, jupyter_pwd)
         if not success:
             return _error(msg)
+
+        # update ports dictionary for this instance if this is an auto
+        if imagedict['ports'] == 'auto':
+            # have to find the first port over 8889 that is open
+            port, msg = _find_open_port(start=8890, stop=9000)
+            if not port:
+                return _error(msg)
+
+            imagedict['ports'] = {8888: port}
 
     # launch container based on provided image, mounting notebook directory from
     # user's home directoy
@@ -180,20 +308,52 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
             user_home: {'bind': '/userhome', 'mode': 'rw'},
             '/etc/group': {'bind': '/etc/group', 'mode': 'ro'},
             '/etc/password': {'bind': '/etc/password', 'mode': 'ro'},
+            '/data': {'bind': '/data', 'mode': 'rw'},
         }
     }
-    # look upon my kwargs hack and tremble. later dicts have priority
-    container = client.containers.run(**{**imagedict, **volumes, **kwargs})
+
+    # if the NV_GPU environment variable was passed in via imagedict, set the
+    # proper runtime value and add an environment variable flag
+    if 'NV_GPU' in imagedict:
+        imagedict['runtime'] = 'nvidia'
+        _update_environment(
+            imagedict,
+            'NVIDIA_VISIBLE_DEVICES',
+            imagedict.pop('NV_GPU')
+        )
+
+    try:
+        # look upon my kwargs hack and tremble. later dicts have priority
+        container = client.containers.run(**{**imagedict, **volumes, **kwargs})
+    except Exception as e:
+        return _error("error launching container: '{}'".format(e))
 
     d = {
         'message': 'container launched successfully',
         'status': SUCCESS,
+        'imagetype': imagetype,
+        'jupyter_url': 'http://eri-gpu:{}/'.format(imagedict['ports'][8888]),
+        'image': imagedict['image'],
     }
 
     for attr in ['id', 'name', 'status']:
         d[attr] = getattr(container, attr)
 
-    # get jupyter notebook url if applicable
+    return d
+
+
+def kill(docker_id):
+    try:
+        docker.from_env().containers.get(docker_id).kill()
+        d = {
+            'message': 'container killed successfully',
+            'status': SUCCESS,
+        }
+    except Exception as e:
+        d = _error("unable to kill docker container")
+        d['error_details'] = str(e)
+
+    d['docker_id'] = docker_id
 
     return d
 
@@ -228,5 +388,5 @@ if __name__ == '__main__':
     launch(
         username=args.username,
         imagetype=args.imagetype,
-        jupyter_pwd=args.jupyter_pwd
+        jupyter_pwd=args.jupyterpwd
     )

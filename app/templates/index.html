@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1>gpu session launcher</h1>
+<div id="current-sessions">
+    <h2>currently active sessions</h2>
+    <div>
+        <table class="table table=striped">
+            <thead>
+                <tr>
+                    <th scope="col">type</th>
+                    <th scope="col">owner</th>
+                    <th scope="col">image name</th>
+                    <th scope="col">jupyter url</th>
+                    <th scope="col">docker id</th>
+                    <th scope="col">uptime</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for x in launched_sessions %}
+                <tr>
+                    <td>{{ x.imagetype }}</td>
+                    <td>{{ x.username }}</td>
+                    <td>{{ x.image }}</td>
+                    <td><a href="{{ x.jupyter_url }}">{{ x.jupyter_url }}</a></td>
+                    <td>{{ x.id[:10] }}</td>
+                    <td>{{ x.uptime }}</td>
+                    <td>
+                        <form action="/killSession" class="form-inline" method="POST">
+                            <input type="hidden" id="kill-docker-id"
+                                   name="docker_id" value="{{ x.id }}">
+                            <input type="hidden" id="kill-pw-hash"
+                                   name="pwhash" value="{{ x.pwhash }}">
+                            <input type="password" id="kill-password"
+                                   name="jupyter_pwd" class="form-control"
+                                   placeholder="enter jupyter password">
+                            <button type="submit" id="kill_submit"
+                                    name="kill session"
+                                    value="kill session"
+                                    class="btn btn-danger">
+                                kill session
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td><em>no active images</em></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="session-launcher-form">
+    <h2>launch a gpu session</h2>
+    <form action="/createSession" method="POST">
+        <div class="form-group">
+            <label for="create-username" class="col-form-label">
+                User Name
+            </label>
+            <p id="create-username-help" class="form-text text-muted">
+                this username must be a valid linux username on the gpu machine
+            </p>
+            <input type="text" class="form-control" id="create-username"
+                   name="username" placeholder="enter username">
+        </div>
+        <div class="form-group">
+            <label for="create-password" class="col-form-label">
+                Password
+            </label>
+            <p id="create-password-help" class="form-text text-muted">
+                <strong>this is not your login password!</strong> this password will be used for your login to the <code>jupyter notebook</code> server and as authentication for killing your container
+            </p>
+            <input type="password" class="form-control"
+                   id="create-password" name="jupyter_pwd"
+                   placeholder="enter password">
+        </div>
+        <div class="form-group">
+            <label for="create-imagetype" class="col-form-label">
+                Image Type
+            </label>
+            <p id="create-sessopt-help" class="form-text text-muted">
+                this is an eri-specific shorthand for the docker image you wish to launch
+            </p>
+            <select type="text" class="form-control" required
+                    id="create-imagetype" name="imagetype">
+                {% for sessopt in sessoptions %}
+                <option
+                    {% if sessopt in disabled_options %}
+                    disabled
+                    {% elif sessopt == "gpu_dev" %}
+                    selected="selected"
+                    {% endif %}>{{ sessopt }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" id="create-submit" class="btn btn-success"
+                value="launch session">
+            launch session
+        </button>
+    </form>
+</div>
+<div id="session-launcher-explainer">
+    <h2>information</h2>
+    <p>use the "launch a gpu session" form above to create a personal container running on the DC GPU machine. based on the image type (currently: <code>gpu_dev</code> or <code>gpu_prod</code>), you will be put into a development or production environment and one of the machine's two gpus will be exposed to you. you should be able to run any code you write with identical behavior in either environment; the only difference is the isolation of the gpus.</p>
+    <h3>requirements</h3>
+    <p>there are few requirements you must satisfy before this will work for you.</p>
+    <ol>
+        <li>you must have a linux user on the gpu machine itself</li>
+        <li>you must be on the ERI network to access the machine</li>
+        <li>if you are launching a <code>gpu_dev</code> or <code>gpu_prod</code> image, there must not be any other running image of that type. this is by fiat for the moment, because we are doing discrete rationing of the two physical gpus</li>
+    </ol>
+    <p>for help with all of the above, you need to contact the box admins. for now, direct all questions and complaints to <a href="mailto:ozan.ersoy@elderresearch.com">ozan.ersoy@elderresearch.com</a></p>
+</div>
+{% endblock %}
