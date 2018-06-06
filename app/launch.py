@@ -38,6 +38,8 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 
 GPU_DEV = 'gpu_dev'
 GPU_PROD = 'gpu_prod'
+GPU_DEV_W_R = 'gpu_dev_w_r'
+GPU_PROD_W_R = 'gpu_prod_w_r'
 NO_GPU_DEV = 'no_gpu_dev'
 ERI_IMAGES = {
     GPU_DEV: {
@@ -54,15 +56,32 @@ ERI_IMAGES = {
         'ports': {8888: 8888},
         'NV_GPU': '1',
     },
+    GPU_DEV_W_R: {
+        'image': 'eri_dev_p_r:latest',
+        'auto_remove': True,
+        'detach': True,
+        'ports': {8888: 8889, 8787: 8788},
+        'NV_GPU': '0',
+    },
+    GPU_PROD_W_R: {
+        'image': 'eri_prod_p_r:latest',
+        'auto_remove': True,
+        'detach': True,
+        'ports': {8888: 8888, 8787: 8787},
+        'NV_GPU': '1',
+    },
     NO_GPU_DEV: {
         'image': 'eri_nogpu_dev:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': 'auto',
+        'ports': {8888: 'auto'},
     },
 }
-GPU_IMAGES = [GPU_DEV, GPU_PROD]
-JUPYTER_IMAGES = [GPU_DEV, GPU_PROD, NO_GPU_DEV]
+GPU_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'NV_GPU' in v]
+JUPYTER_IMAGES = [
+    k for (k, v) in ERI_IMAGES.items() if 8888 in v.get('ports', {})
+]
+R_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 8787 in v.get('ports', {})]
 SUCCESS = 'success'
 FAILURE = 'failure'
 
@@ -115,7 +134,12 @@ def active_eri_images(client=None, ignore_other_images=False):
     active = []
 
     for c in client.containers.list():
-        image = c.image.tags[0]
+        try:
+            image = c.image.tags[0]
+        except Exception as e:
+            print('untagged image {}'.format(c.image.id))
+            continue
+
         imagetype, imagedict = _image_lookup('image', image)
 
         if ignore_other_images and (imagetype is None):
@@ -126,18 +150,30 @@ def active_eri_images(client=None, ignore_other_images=False):
             'imagetype': imagetype,
             'id': c.id,
         }
+
+        if imagetype in JUPYTER_IMAGES + R_IMAGES:
+            # we set a password value to launch this image; go get it
+            pw = _env_lookup(c, 'PASSWORD')
+            d['pwhash'] = hashlib.md5(pw.encode()).hexdigest()
+
         if imagetype in JUPYTER_IMAGES:
             # go get the actual mapped port (dynamically allocated for non-gpu
-            # dev boxes)
+            # dev boxes, so can't just pull it from the imagedict in ERI_IMAGES
+            # which we looked up a few lines back)
             port = int(
                 c.attrs['HostConfig']['PortBindings']['8888/tcp'][0]['HostPort']
             )
 
             d['jupyter_url'] = 'http://eri-gpu:{}'.format(port)
 
-            # go get the environment variable password and hash it
-            pw = _env_lookup(c, 'PASSWORD')
-            d['pwhash'] = hashlib.md5(pw.encode()).hexdigest()
+        if imagetype in R_IMAGES:
+            # similarly for the rstudio server, go find the port from the
+            # container config
+            port = int(
+                c.attrs['HostConfig']['PortBindings']['8787/tcp'][0]['HostPort']
+            )
+
+            d['rstudio_url'] = 'http://eri-gpu:{}'.format(port)
 
         # check for a username environment variable
         d['username'] = _env_lookup(c, 'USER')
@@ -277,44 +313,52 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
         msg = "user '{}' does not exist on this system; contact administrators"
         msg = msg.format(username)
         return _error(msg)
+    except Exception as e:
+        return _error("unhandled error getting user name info: {}".format(e))
 
-    # create notebook directory if it doesn't exist
+    # verify that this user has a home directory on the base server (will be
+    # used in mounting step)
     user_home = os.path.expanduser('~{}'.format(username))
     if not os.path.isdir(user_home):
         # should have been done as part of account creation, error
         msg = "user '{}' does not have a home directory; contact administrators"
         msg = msg.format(username)
         return _error(msg)
+    else:
+        # it does exist, so we will mount it below in the `volumes` block.
+        # expose it as a HOME variable in the image itself
+        _update_environment(imagedict, 'HOME', user_home)
 
+    # take care of some of the jupyter notebook specific steps
     if imagetype in JUPYTER_IMAGES:
-        # configure the jupyter notebook password if needed
+        # configure the jupyter notebook password
         success, msg = _setup_jupyter_password(imagedict, jupyter_pwd)
         if not success:
             return _error(msg)
 
         # update ports dictionary for this instance if this is an auto
-        if imagedict['ports'] == 'auto':
+        if imagedict['ports'][8888] == 'auto':
             # have to find the first port over 8889 that is open
             port, msg = _find_open_port(start=8890, stop=9000)
             if not port:
                 return _error(msg)
 
-            imagedict['ports'] = {8888: port}
+            imagedict['ports'][8888] = port
 
     # launch container based on provided image, mounting notebook directory from
     # user's home directoy
     volumes = {
         'volumes': {
-            user_home: {'bind': '/userhome', 'mode': 'rw'},
+            user_home: {'bind': user_home, 'mode': 'rw'},
             '/etc/group': {'bind': '/etc/group', 'mode': 'ro'},
-            '/etc/password': {'bind': '/etc/password', 'mode': 'ro'},
+            '/etc/passwd': {'bind': '/etc/passwd', 'mode': 'ro'},
             '/data': {'bind': '/data', 'mode': 'rw'},
         }
     }
 
     # if the NV_GPU environment variable was passed in via imagedict, set the
     # proper runtime value and add an environment variable flag
-    if 'NV_GPU' in imagedict:
+    if imagetype in GPU_IMAGES:
         imagedict['runtime'] = 'nvidia'
         _update_environment(
             imagedict,
@@ -335,6 +379,9 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
         'jupyter_url': 'http://eri-gpu:{}/'.format(imagedict['ports'][8888]),
         'image': imagedict['image'],
     }
+
+    if imagetype in R_IMAGES:
+        d['rstudio_url'] = 'http://eri-gpu:{}'.format(imagedict['ports'][8787])
 
     for attr in ['id', 'name', 'status']:
         d[attr] = getattr(container, attr)
