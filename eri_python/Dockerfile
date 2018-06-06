@@ -28,7 +28,7 @@ RUN pip --no-cache-dir install \
 
 # pytorch is special
 RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl
-RUN pip3 install torchvision
+RUN pip install torchvision
 
 # ipython kernel
 RUN python -m ipykernel.kernelspec
