@@ -37,5 +37,10 @@ RUN pip --no-cache-dir install \
 RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl
 RUN pip install torchvision
 
+# onnx requires some additional *nix libraries
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y protobuf-compiler libprotoc-dev
+RUN ONNX_ML=1 pip --no-cache-dir install onnx
+
 # ipython kernel
 RUN python -m ipykernel.kernelspec
