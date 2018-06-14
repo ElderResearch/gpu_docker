@@ -8,6 +8,7 @@ LABEL maintainer="Zach Lamberty <zach.lamberty@elderresearch.com>"
 RUN pip --no-cache-dir install \
         boto3 \
         cssselect \
+        gensim \
         ipykernel \
         jupyter \
         keras \
@@ -21,6 +22,7 @@ RUN pip --no-cache-dir install \
         psycopg2 \
         requests \
         seaborn \
+        spacy \
         sqlalchemy \
         tables \
         tqdm \
