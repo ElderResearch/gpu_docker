@@ -26,6 +26,10 @@ EXPOSE 8787
 # lead here
 COPY jupyter_notebook_config.py /
 
+# make bash the default shell
+RUN chsh -s /bin/bash
+ENV SHELL /bin/bash
+
 # hack script to start both rstudio server and jupyter notebook
 COPY starthack.sh /
 CMD ["/starthack.sh"]
