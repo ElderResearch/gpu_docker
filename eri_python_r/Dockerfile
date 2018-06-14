@@ -34,7 +34,14 @@ RUN apt-get install -y --no-install-recommends \
 
 # now manually install a ton of stuff
 COPY install.r /
-RUN Rscript /install.r
+# the make variable before inspired by this:
+#  http://www.rexamine.com/2015/07/speeding-up-r-package-installation-process/
+# could be doing something terrible.
+#  y
+#  o
+#  l
+#  o
+RUN MAKE="make -j 8" Rscript /install.r
 
 # rstudio install, ignore the one below
 RUN apt-get install -y --no-install-recommends gdebi-core wget \
