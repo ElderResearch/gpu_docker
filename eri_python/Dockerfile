@@ -44,3 +44,7 @@ RUN ONNX_ML=1 pip --no-cache-dir install onnx
 
 # ipython kernel
 RUN python -m ipykernel.kernelspec
+
+# finally, not python stuff, but I want the following stuff to be generally
+# available in all downstream images
+RUN apt-get install --no-install-recommends -y less git
