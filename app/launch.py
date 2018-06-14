@@ -352,6 +352,7 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
             user_home: {'bind': user_home, 'mode': 'rw'},
             '/etc/group': {'bind': '/etc/group', 'mode': 'ro'},
             '/etc/passwd': {'bind': '/etc/passwd', 'mode': 'ro'},
+            '/etc/skel': {'bind': '/etc/skel', 'mode': 'ro'},
             '/data': {'bind': '/data', 'mode': 'rw'},
         }
     }
