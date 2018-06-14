@@ -39,3 +39,18 @@ assert tensorflow.__version__ >= '1.7.0'
 hello = tensorflow.constant('hello')
 with tensorflow.Session() as sess:
     assert sess.run(hello) == b'hello'
+
+
+# mxnet validation (via http://mxnet.incubator.apache.org/install/index.html)
+import mxnet as mx
+import numpy as np
+
+a = mx.nd.ones((2, 3), mx.gpu())
+b = a * 2 + 1
+assert np.array_equal(
+    b.asnumpy(),
+    np.array([
+        [3., 3., 3.],
+        [3., 3., 3.]
+    ])
+)
