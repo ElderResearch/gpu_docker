@@ -366,6 +366,12 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
             'NVIDIA_VISIBLE_DEVICES',
             imagedict.pop('NV_GPU')
         )
+    else:
+        _update_environment(
+            imagedict,
+            'NVIDIA_VISIBLE_DEVICES',
+            'none'
+        )
 
     try:
         # look upon my kwargs hack and tremble. later dicts have priority
