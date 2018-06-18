@@ -135,7 +135,7 @@ def active_eri_images(client=None, ignore_other_images=False):
 
     for c in client.containers.list():
         try:
-            image = c.image.tags[0]
+            image = c.attrs['Config']['Image']
         except Exception as e:
             print('untagged image {}'.format(c.image.id))
             continue
