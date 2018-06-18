@@ -28,6 +28,9 @@ COPY jupyter_notebook_config.py /
 RUN chsh -s /bin/bash
 ENV SHELL /bin/bash
 
+# try to enforce eri data directory locations
+ENV SCIKIT_LEARN_DATA /data
+
 # hack script to start both rstudio server and jupyter notebook
 COPY starthack.sh /
 CMD ["/starthack.sh"]
