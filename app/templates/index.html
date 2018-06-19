@@ -3,6 +3,7 @@
 <h1>gpu session launcher</h1>
 <div id="current-sessions">
     <p>first time users: see <a href="/#information">information section</a> below</p>
+    <p>for reservations, see the <a href="/#gpu-calendar">calendar section</a> below</p>
     <h2>currently active sessions</h2>
     <div>
         <table class="table table=striped">
@@ -126,5 +127,12 @@
             <code>no_gpu_dev</code>: this is the same basic development environment as the one in <code>gpu_{dev,prod}</code> without any access to the gpu resources. you may want to use this for development of code that will later be submitted in the <code>gpu_dev</code> or <code>gpu_prod</code> slot
         </li>
     </ul>
+</div>
+<div id="gpu-calendar">
+    <h2>calendar</h2>
+    <p>to make your own reservations, click the "add to google calendar" link in the bottom right</p>
+    <iframe src="https://calendar.google.com/calendar/embed?showPrint=0&amp;showTabs=0&amp;showCalendars=0&amp;mode=WEEK&amp;height=600&amp;wkst=1&amp;bgcolor=%23ffffff&amp;src=datamininglab.com_6taegbbncqqjuv6pum1fo61ej8%40group.calendar.google.com&amp;color=%232F6309&amp;ctz=America%2FNew_York"
+            style="border-width:0" width="800" height="600" frameborder="0"
+            scrolling="no"></iframe>
 </div>
 {% endblock %}
