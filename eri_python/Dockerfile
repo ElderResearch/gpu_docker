@@ -48,3 +48,13 @@ RUN python -m ipykernel.kernelspec
 # finally, not python stuff, but I want the following stuff to be generally
 # available in all downstream images
 RUN apt-get install --no-install-recommends -y less git
+
+# install spacy `en` model and set relevant environment variables
+# c.f. https://github.com/explosion/spaCy/issues/1721
+RUN python -m spacy download en
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+
+# download some of the nltk libraries
+#RUN python -m nltk.downloader all
+RUN python -m nltk.downloader punkt
