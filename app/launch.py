@@ -140,6 +140,10 @@ def active_eri_images(client=None, ignore_other_images=False):
             print('untagged image {}'.format(c.image.id))
             continue
 
+        # handle the untagged "latest" images:
+        if len(image.split(':')) < 2:
+            image = '{}:latest'.format(image)
+
         imagetype, imagedict = _image_lookup('image', image)
 
         if ignore_other_images and (imagetype is None):
