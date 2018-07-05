@@ -246,9 +246,10 @@ def _update_environment(imagedict, key, val):
 
 
 def _setup_jupyter_password(imagedict, jupyter_pwd=None):
-    if jupyter_pwd is None:
+    print('jupyter_pwd = {}'.format(jupyter_pwd))
+    if jupyter_pwd in [None, '']:
         msg = "you must provide a password for the jupyter notebook service"
-        return False, _error(msg)
+        return False, msg
 
     # the neighboring jupyter_notebook_config.py file will look for an
     # environment variable PASSWORD, so we need to set that in our container
