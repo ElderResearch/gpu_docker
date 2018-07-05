@@ -78,6 +78,8 @@ ERI_IMAGES = {
     },
 }
 GPU_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'NV_GPU' in v]
+PROD_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'prod' in v['image']]
+DEV_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'dev' in v['image']]
 JUPYTER_IMAGES = [
     k for (k, v) in ERI_IMAGES.items() if 8888 in v.get('ports', {})
 ]
