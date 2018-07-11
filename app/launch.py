@@ -41,6 +41,7 @@ GPU_PROD = 'gpu_prod'
 GPU_DEV_W_R = 'gpu_dev_w_r'
 GPU_PROD_W_R = 'gpu_prod_w_r'
 NO_GPU_DEV = 'no_gpu_dev'
+NO_GPU_DEV_W_R = 'no_gpu_dev_w_r'
 ERI_IMAGES = {
     GPU_DEV: {
         'image': 'eri_dev:latest',
@@ -75,6 +76,12 @@ ERI_IMAGES = {
         'auto_remove': True,
         'detach': True,
         'ports': {8888: 'auto'},
+    },
+    NO_GPU_DEV_W_R: {
+        'image': 'eri_nogpu_dev_p_r:latest',
+        'auto_remove': True,
+        'detach': True,
+        'ports': {8888: 'auto', 8787: 'auto'},
     },
 }
 GPU_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'NV_GPU' in v]
@@ -248,6 +255,7 @@ def _update_environment(imagedict, key, val):
 
 
 def _setup_jupyter_password(imagedict, jupyter_pwd=None):
+    print('user = {}'.format(imagedict['environment']['USER']))
     print('jupyter_pwd = {}'.format(jupyter_pwd))
     if jupyter_pwd in [None, '']:
         msg = "you must provide a password for the jupyter notebook service"
@@ -351,6 +359,18 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
                 return _error(msg)
 
             imagedict['ports'][8888] = port
+
+    # take care of some of the rstudio specific steps
+    if imagetype in R_IMAGES:
+        # update ports dictionary for this instance if this is an auto
+        if imagedict['ports'][8787] == 'auto':
+            # external 8787 and 8788 are reserverd for gpu instances.
+            # have to find the first port over 8788 that is open
+            port, msg = _find_open_port(start=8789, stop=8799)
+            if not port:
+                return _error(msg)
+
+            imagedict['ports'][8787] = port
 
     # launch container based on provided image, mounting notebook directory from
     # user's home directoy
