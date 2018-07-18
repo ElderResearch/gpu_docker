@@ -56,3 +56,30 @@ RUN python -m spacy download en
 # download some of the nltk libraries
 #RUN python -m nltk.downloader all
 RUN python -m nltk.downloader punkt
+
+# install darknet (in stages) --------------------------------------------------
+# 1. get code
+RUN cd /opt && \
+    git clone https://github.com/pjreddie/darknet.git
+
+WORKDIR /opt/darknet
+
+# 2. change gpu flag with the best editor, sed
+RUN sed -i -e 's/GPU=0/GPU=1/' Makefile
+
+# 3. install other dependencies (header files)
+RUN apt-get install --no-install-recommends -y cuda-curand-dev-9-0 \
+                                               cuda-cublas-dev-9-0
+
+# 4. make and move
+RUN make
+RUN mv darknet /usr/local/bin
+
+# 5. uninstall that stupid header stuff
+RUN apt-get remove -y cuda-curand-dev-9-0 \
+                      cuda-cublas-dev-9-0
+
+# 6. clean up
+WORKDIR /
+
+# end darknet install ----------------------------------------------------------
