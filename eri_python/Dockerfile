@@ -4,6 +4,11 @@ FROM tensorflow/tensorflow:latest-gpu-py3
 
 LABEL maintainer="Zach Lamberty <zach.lamberty@elderresearch.com>"
 
+RUN apt-get update \
+        && apt-get install -y openssh-server \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
 # generic pip installs of all the most basic bad lads
 # separating out expensive installations just for some caching love
 RUN pip --no-cache-dir install spacy
