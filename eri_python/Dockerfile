@@ -27,6 +27,7 @@ RUN pip --no-cache-dir install \
         neo4j-driver \
         networkx \
         nltk \
+        numba \
         Pillow \
         plotly \
         psycopg2 \
