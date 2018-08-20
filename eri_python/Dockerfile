@@ -30,6 +30,7 @@ RUN pip --no-cache-dir install \
         Pillow \
         plotly \
         psycopg2 \
+        pyarrow \
         requests \
         seaborn \
         spacy \
