@@ -64,6 +64,11 @@ RUN python -m spacy download en
 #RUN python -m nltk.downloader all
 RUN python -m nltk.downloader punkt
 
+# the numba install gets its own special environment variables
+ENV NUMBAPRO_NVVM /usr/local/cuda-9.0/nvvm/lib64/libnvvm.so
+ENV NUMBAPRO_LIBDEVICE /usr/local/cuda-9.0/nvvm/libdevice/
+
+
 # install darknet (in stages) --------------------------------------------------
 # 1. get code
 RUN cd /opt && \
