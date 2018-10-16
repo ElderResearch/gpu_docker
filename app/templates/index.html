@@ -25,8 +25,18 @@
                     <td>{{ x.imagetype }}</td>
                     <td>{{ x.username }}</td>
                     <td>{{ x.image }}</td>
+<<<<<<< HEAD
                     <td><a href="{{ x.jupyter_url }}">{{ x.jupyter_url[:14] + x.jupyter_url[36:]}}</a></td>
                     <td><a href="{{ x.rstudio_url }}">{{ x.rstudio_url[:14] + x.rstudio_url[36:]}}</a></td>
+=======
+<<<<<<< Updated upstream
+                    <td><a href="{{ x.jupyter_url }}">{{ x.jupyter_url }}</a></td>
+                    <td><a href="{{ x.rstudio_url }}">{{ x.rstudio_url }}</a></td>
+=======
+                    <td><a href="{{ x.jupyter_url }}">{{ x.jupyter_url[:14] + x.jupyter_url[36:]}}</a></td>
+                    <td><a href="{{ x.rstudio_url }}">{{ x.get('rstudio_url','')[:14] + x.get('rstudio_url','')[36:] }}</a></td>
+>>>>>>> Stashed changes
+>>>>>>> fixed 500 error when rstudio_url missing from dict keys
                     <td>{{ x.id[:10] }}</td>
                     <td>{{ x.uptime }}</td>
                     <td>
