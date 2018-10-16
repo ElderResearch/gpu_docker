@@ -388,6 +388,10 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
     # proper runtime value and add an environment variable flag
     if imagetype in GPU_IMAGES:
         imagedict['runtime'] = 'nvidia'
+        # increasing shm_size to 8G. default if not set explicitly is 64M.
+        # this prevents bus error when running pytorch in docker containers
+        # see https://github.com/pytorch/pytorch/issues/2244
+        imagedict['shm_size'] = '8G'
         _update_environment(
             imagedict,
             'NVIDIA_VISIBLE_DEVICES',
