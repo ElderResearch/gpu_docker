@@ -177,7 +177,7 @@ def active_eri_images(client=None, ignore_other_images=False):
                 c.attrs['HostConfig']['PortBindings']['8888/tcp'][0]['HostPort']
             )
 
-            d['jupyter_url'] = 'http://eri-gpu:{}'.format(port)
+            d['jupyter_url'] = 'http://eri-gpu.cho.elderresearch.com:{}'.format(port)
 
         if imagetype in R_IMAGES:
             # similarly for the rstudio server, go find the port from the
@@ -186,7 +186,7 @@ def active_eri_images(client=None, ignore_other_images=False):
                 c.attrs['HostConfig']['PortBindings']['8787/tcp'][0]['HostPort']
             )
 
-            d['rstudio_url'] = 'http://eri-gpu:{}'.format(port)
+            d['rstudio_url'] = 'http://eri-gpu.cho.elderresearch.com:{}'.format(port)
 
         # check for a username environment variable
         d['username'] = _env_lookup(c, 'USER')
