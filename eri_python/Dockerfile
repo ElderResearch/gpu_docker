@@ -21,6 +21,7 @@ RUN pip --no-cache-dir install \
         gensim \
         ipykernel \
         jupyter \
+        jupyter-tensorboard \
         keras \
         lxml \
         matplotlib \
