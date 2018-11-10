@@ -35,7 +35,7 @@ install.packages(c('skimr'))
 install.packages(c('sqldf'))
 install.packages(c('tensorflow'))
 install.packages(c('tidyverse'))
+install.packages(c('topicmodels'))
 install.packages(c('usethis'))
 install.packages(c('xlsx'))
 install.packages(c('zoo'))
-

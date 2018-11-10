@@ -96,3 +96,6 @@ RUN apt-get remove -y cuda-curand-dev-9-0 \
 WORKDIR /
 
 # end darknet install ----------------------------------------------------------
+
+# install gsl
+RUN apt-get install --no-install-recommends -y libgsl-dev
