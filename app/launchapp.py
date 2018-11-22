@@ -16,6 +16,12 @@ FLASH_CLS = {
 @app.route('/', methods=['GET'])
 def home():
     launched_sessions = launch.active_eri_images(ignore_other_images=True)
+
+    if len(launch.NVIDIA_USABLE_DEVICES) > 1:
+        sessoptions = list(launch.ERI_IMAGES.keys())
+    else:
+        sessoptions = [k for k in launch.ERI_IMAGES.keys() if 'SINGLE' in k]
+
     return render_template(
         'index.html',
         launched_sessions=launched_sessions,
@@ -24,7 +30,7 @@ def home():
             for ls in launched_sessions
             if ls['imagetype'] in launch.GPU_IMAGES
         },
-        sessoptions=list(launch.ERI_IMAGES.keys()),
+        sessoptions=sessoptions,
     )
 
 
