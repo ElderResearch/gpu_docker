@@ -118,7 +118,7 @@ def _update_avail_devices(client=None):
     """update set of gpus available for use"""
     available_devices = set(['0','1','2','4'])
     client = client or docker.from_env()
-    for c in client.countainers.list():
+    for c in client.containers.list():
         gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
         if gpus:
             available_devices.difference_update(gpus.split(','))
@@ -310,6 +310,7 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         None
 
     """
+    global AVAIL_DEVICES
     # is this image type defined (could just check image names directly...)
     try:
         imagedict = copy.deepcopy(ERI_IMAGES[imagetype])
@@ -349,6 +350,9 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         # it does exist, so we will mount it below in the `volumes` block.
         # expose it as a HOME variable in the image itself
         _update_environment(imagedict, 'HOME', user_home)
+
+    # add image type to container labels
+    imagedict['labels'] = {'image_type': imagetype}
 
     # take care of some of the jupyter notebook specific steps
     if imagetype in JUPYTER_IMAGES:
@@ -398,7 +402,9 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         # this prevents bus error when running pytorch in docker containers
         # see https://github.com/pytorch/pytorch/issues/2244
         imagedict['shm_size'] = '8G'
-        gpu_ids = [AVAIL_DEVICES.pop() for i in range(imagedict.pop('NV_GPU'))]
+        gpu_ids = []
+        for i in range(imagedict.pop('NV_GPU')):
+            gpu_ids.append(AVAIL_DEVICES.pop())
         _update_environment(
             imagedict,
             'NVIDIA_VISIBLE_DEVICES',
@@ -432,11 +438,12 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         d[attr] = getattr(container, attr)
 
     AVAIL_DEVICES = _update_avail_devices(client)
-    
+
     return d
 
 
 def kill(docker_id):
+    global AVAIL_DEVICES
     try:
         client = docker.from_env()
         client.containers.get(docker_id).kill()
