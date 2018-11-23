@@ -16,15 +16,24 @@ FLASH_CLS = {
 @app.route('/', methods=['GET'])
 def home():
     launched_sessions = launch.active_eri_images(ignore_other_images=True)
+
+    if len(launch.AVAIL_DEVICES) > 1:
+        sessoptions = list(launch.ERI_IMAGES.keys())
+        disabled_options = {}
+    elif len(launch.AVAIL_DEVICES) == 1:
+        sessoptions = [k for k in launch.ERI_IMAGES.keys() if 'multi' not in k]
+        disabled_options = {k for k in launch.ERI_IMAGES.keys() if 'multi' in k}
+    else:
+        sessoptions = [k for k in launch.ERI_IMAGES.keys() if 'no_gpu' in k]
+        disabled_options = {
+            k for k in launch.ERI_IMAGES.keys() if 'no_gpu' not in k
+        }
+
     return render_template(
         'index.html',
         launched_sessions=launched_sessions,
-        disabled_options={
-            ls['imagetype']
-            for ls in launched_sessions
-            if ls['imagetype'] in launch.GPU_IMAGES
-        },
-        sessoptions=list(launch.ERI_IMAGES.keys()),
+        disabled_options=disabled_options,
+        sessoptions=sessoptions,
     )
 
 

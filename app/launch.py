@@ -36,48 +36,44 @@ import pytz
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 
-GPU_DEV = 'gpu_dev'
-GPU_PROD = 'gpu_prod'
-GPU_DEV_W_R = 'gpu_dev_w_r'
-GPU_PROD_W_R = 'gpu_prod_w_r'
-NO_GPU_DEV = 'no_gpu_dev'
-NO_GPU_DEV_W_R = 'no_gpu_dev_w_r'
+AVAIL_DEVICES=set(['0','1','2','3'])
+
 ERI_IMAGES = {
-    GPU_DEV: {
+    'single_gpu': {
         'image': 'eri_dev:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': {8888: 8889},
-        'NV_GPU': '0',
+        'ports': {8888: 'auto'},
+        'NV_GPU': 1,
     },
-    GPU_PROD: {
-        'image': 'eri_prod:latest',
+    'multi_gpu': {
+        'image': 'eri_dev:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': {8888: 8888},
-        'NV_GPU': '1',
+        'ports': {8888: 'auto'},
+        'NV_GPU': 2,
     },
-    GPU_DEV_W_R: {
+    'single_gpu_w_r': {
         'image': 'eri_dev_p_r:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': {8888: 8889, 8787: 8788},
-        'NV_GPU': '0',
+        'ports': {8888: 'auto', 8787: 'auto'},
+        'NV_GPU': 1,
     },
-    GPU_PROD_W_R: {
-        'image': 'eri_prod_p_r:latest',
+    'multi_gpu_w_r': {
+        'image': 'eri_dev_p_r:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': {8888: 8888, 8787: 8787},
-        'NV_GPU': '1',
+        'ports': {8888: 'auto', 8787: 'auto'},
+        'NV_GPU': 2,
     },
-    NO_GPU_DEV: {
+    'no_gpu': {
         'image': 'eri_nogpu_dev:latest',
         'auto_remove': True,
         'detach': True,
         'ports': {8888: 'auto'},
     },
-    NO_GPU_DEV_W_R: {
+    'no_gpu_w_r': {
         'image': 'eri_nogpu_dev_p_r:latest',
         'auto_remove': True,
         'detach': True,
@@ -85,8 +81,6 @@ ERI_IMAGES = {
     },
 }
 GPU_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'NV_GPU' in v]
-PROD_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'prod' in v['image']]
-DEV_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'dev' in v['image']]
 JUPYTER_IMAGES = [
     k for (k, v) in ERI_IMAGES.items() if 8888 in v.get('ports', {})
 ]
@@ -108,18 +102,16 @@ def _error(msg):
         'status': FAILURE,
     }
 
-
-def _image_lookup(k, v):
-    """iterate through ERI_IMAGES and return the internal tag and dictionary
-    for the first item that contains key k with value v
-
-    """
-    for imagetag, imagedict in ERI_IMAGES.items():
-        if k in imagedict and imagedict[k] == v:
-            return imagetag, imagedict
-
-    return None, None
-
+def _update_avail_devices(client=None):
+    """update set of gpus available for use"""
+    global AVAIL_DEVICES
+    available_devices = set(['0','1','2','3'])
+    client = client or docker.from_env()
+    for c in client.containers.list():
+        gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
+        if gpus:
+            available_devices.difference_update(gpus.split(','))
+    AVAIL_DEVICES = available_devices
 
 def _running_images(client=None, ignore_other_images=False):
     return [tag for c in client.containers.list() for tag in c.image.tags]
@@ -144,7 +136,8 @@ def active_eri_images(client=None, ignore_other_images=False):
 
     for c in client.containers.list():
         try:
-            image = c.attrs['Config']['Image']
+            imagetype = c.attrs['Config']['Labels'].get('image_type', None)
+            image = ERI_IMAGES[imagetype]['image']
         except Exception as e:
             print('untagged image {}'.format(c.image.id))
             continue
@@ -152,8 +145,6 @@ def active_eri_images(client=None, ignore_other_images=False):
         # handle the untagged "latest" images:
         if len(image.split(':')) < 2:
             image = '{}:latest'.format(image)
-
-        imagetype, imagedict = _image_lookup('image', image)
 
         if ignore_other_images and (imagetype is None):
             continue
@@ -204,12 +195,12 @@ def active_eri_images(client=None, ignore_other_images=False):
     return active
 
 
-def _validate_launch(imagetype=GPU_DEV, client=None):
-    """basically, keep gpu instances unique
+def _validate_launch(imagetype='single_gpu', client=None):
+    """basically, ensure enough gpus available for use
 
     args:
         imagetype (str): module-specific enumeration of available images
-            (default: 'gpu_dev', which points to docker image `eri_dev:latest`)
+            (default: 'single_gpu', which points to docker image `eri_dev:latest`)
         client (docker.client.DockerClient): the docker client object
             (default: None, which builds the basic client using
             `docker.from_env`)
@@ -222,11 +213,13 @@ def _validate_launch(imagetype=GPU_DEV, client=None):
 
     """
     client = client or docker.from_env()
-    if imagetype in [GPU_DEV, GPU_PROD]:
-        if ERI_IMAGES[imagetype] in _running_images(client):
+    if imagetype in GPU_IMAGES:
+        if ERI_IMAGES[imagetype]['NV_GPU'] > len(AVAIL_DEVICES):
             return (
                 False,
-                "only one instance of {} allowed at a time".format(imagetype)
+                "only {} gpus available at this time".format(
+                    len(AVAIL_DEVICES)
+                    )
             )
         else:
             return True, None
@@ -284,19 +277,19 @@ def _find_open_port(start=8890, stop=9000):
     )
 
 
-def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
+def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
     """launch a docker container for user `username` of type `imagetype`
 
     args:
         username (str): linux user name, used for mounting home directories
         imagetype (str): module-specific enumeration of available images
-            (default: 'gpu_dev', which points to docker image `eri_dev:latest`)
+            (default: 'single_gpu', which points to docker image `eri_dev:latest`)
         jupyter_pwd (str): password for jupyter notebook signin
         kwargs (dict): all other keyword args are passed to the
             `client.containers.run` function
 
     returns:
-        dict: json-able response string declaring the launched contianer id and
+        dict: json-able response string declaring the launched container id and
             possibly other important information, or an error message if
             launching failed for some reason
 
@@ -343,6 +336,9 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
         # it does exist, so we will mount it below in the `volumes` block.
         # expose it as a HOME variable in the image itself
         _update_environment(imagedict, 'HOME', user_home)
+
+    # add image type to container labels
+    imagedict['labels'] = {'image_type': imagetype}
 
     # take care of some of the jupyter notebook specific steps
     if imagetype in JUPYTER_IMAGES:
@@ -392,10 +388,13 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
         # this prevents bus error when running pytorch in docker containers
         # see https://github.com/pytorch/pytorch/issues/2244
         imagedict['shm_size'] = '8G'
+        gpu_ids = []
+        for i in range(imagedict.pop('NV_GPU')):
+            gpu_ids.append(AVAIL_DEVICES.pop())
         _update_environment(
             imagedict,
             'NVIDIA_VISIBLE_DEVICES',
-            imagedict.pop('NV_GPU')
+            ','.join(gpu_ids)
         )
     else:
         _update_environment(
@@ -424,12 +423,16 @@ def launch(username, imagetype=GPU_DEV, jupyter_pwd=None, **kwargs):
     for attr in ['id', 'name', 'status']:
         d[attr] = getattr(container, attr)
 
+    _update_avail_devices(client)
+
     return d
 
 
 def kill(docker_id):
+    global AVAIL_DEVICES
     try:
-        docker.from_env().containers.get(docker_id).kill()
+        client = docker.from_env()
+        client.containers.get(docker_id).kill()
         d = {
             'message': 'container killed successfully',
             'status': SUCCESS,
@@ -439,6 +442,8 @@ def kill(docker_id):
         d['error_details'] = str(e)
 
     d['docker_id'] = docker_id
+
+    _update_avail_devices(client)
 
     return d
 
@@ -456,7 +461,7 @@ def parse_args():
     imagetype = "type of image to launch"
     parser.add_argument(
         "-t", "--imagetype", help=imagetype, choices=ERI_IMAGES.keys(),
-        default=GPU_DEV
+        default='single_gpu'
     )
 
     jupyter_pwd = (
