@@ -17,10 +17,10 @@ FLASH_CLS = {
 def home():
     launched_sessions = launch.active_eri_images(ignore_other_images=True)
 
-    if len(launch.NVIDIA_USABLE_DEVICES) > 1:
+    if len(launch.AVAIL_DEVICES) > 1:
         sessoptions = list(launch.ERI_IMAGES.keys())
         disabled_options = {}
-    elif len(launch.NVIDIA_USABLE_DEVICES) == 1:
+    elif len(launch.AVAIL_DEVICES) == 1:
         sessoptions = [k for k in launch.ERI_IMAGES.keys() if 'multi' not in k]
         disabled_options = {k for k in launch.ERI_IMAGES.keys() if 'multi' in k}
     else:

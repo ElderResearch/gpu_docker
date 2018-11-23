@@ -102,28 +102,16 @@ def _error(msg):
         'status': FAILURE,
     }
 
-
-def _image_lookup(k, v):
-    """iterate through ERI_IMAGES and return the internal tag and dictionary
-    for the first item that contains key k with value v
-
-    """
-    for imagetag, imagedict in ERI_IMAGES.items():
-        if k in imagedict and imagedict[k] == v:
-            return imagetag, imagedict
-
-    return None, None
-
 def _update_avail_devices(client=None):
     """update set of gpus available for use"""
-    available_devices = set(['0','1','2','4'])
+    global AVAIL_DEVICES
+    available_devices = set(['0','1','2','3'])
     client = client or docker.from_env()
     for c in client.containers.list():
         gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
         if gpus:
             available_devices.difference_update(gpus.split(','))
-
-    return available_devices
+    AVAIL_DEVICES = available_devices
 
 def _running_images(client=None, ignore_other_images=False):
     return [tag for c in client.containers.list() for tag in c.image.tags]
@@ -148,7 +136,8 @@ def active_eri_images(client=None, ignore_other_images=False):
 
     for c in client.containers.list():
         try:
-            image = c.attrs['Config']['Image']
+            imagetype = c.attrs['Config']['Labels'].get('image_type', None)
+            image = ERI_IMAGES[imagetype]['image']
         except Exception as e:
             print('untagged image {}'.format(c.image.id))
             continue
@@ -156,8 +145,6 @@ def active_eri_images(client=None, ignore_other_images=False):
         # handle the untagged "latest" images:
         if len(image.split(':')) < 2:
             image = '{}:latest'.format(image)
-
-        imagetype, imagedict = _image_lookup('image', image)
 
         if ignore_other_images and (imagetype is None):
             continue
@@ -310,7 +297,6 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         None
 
     """
-    global AVAIL_DEVICES
     # is this image type defined (could just check image names directly...)
     try:
         imagedict = copy.deepcopy(ERI_IMAGES[imagetype])
@@ -437,7 +423,7 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
     for attr in ['id', 'name', 'status']:
         d[attr] = getattr(container, attr)
 
-    AVAIL_DEVICES = _update_avail_devices(client)
+    _update_avail_devices(client)
 
     return d
 
@@ -457,7 +443,7 @@ def kill(docker_id):
 
     d['docker_id'] = docker_id
 
-    AVAIL_DEVICES = _update_avail_devices(client)
+    _update_avail_devices(client)
 
     return d
 
