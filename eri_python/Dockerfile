@@ -14,6 +14,18 @@ RUN apt-get update \
 RUN pip --no-cache-dir install spacy
 RUN pip --no-cache-dir install mxnet-cu90
 
+# install dependencies for smac
+RUN pip --no-cache-dir install \
+    	ConfigSpace \
+    	emcee \
+    	george \
+    	joblib \
+    	psutil \
+    	pyDOE \
+    	pyrfr \
+    	sobol_seq \
+    	statsmodels
+
 # and now the rest
 RUN pip --no-cache-dir install \
         boto3 \
@@ -35,6 +47,7 @@ RUN pip --no-cache-dir install \
         pyarrow \
         requests \
         seaborn \
+        smac \
         spacy \
         sqlalchemy \
         tables \
