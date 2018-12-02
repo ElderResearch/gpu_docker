@@ -22,9 +22,8 @@ def home():
     return render_template(
         'index.html',
         launched_sessions=launched_sessions,
-        disabled_options=disabled_options,
         sessoptions=list(launch.ERI_IMAGES.keys()),
-        num_avail_gpus=list(range(len(launch.AVAIL_DEVICES)))
+        num_avail_gpus=list(range(len(launch.AVAIL_DEVICES) + 1))
     )
 
 # #TODO(andrew.stewart): modify form to choose Python-only or both and choose # of GPUs

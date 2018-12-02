@@ -268,6 +268,7 @@ def launch(username, imagetype=None, jupyter_pwd=None, num_gpus=0, **kwargs):
         None
 
     """
+    num_gpus = int(num_gpus)
     # is this image type defined (could just check image names directly...)
     try:
         imagedict = copy.deepcopy(ERI_IMAGES[imagetype])
@@ -432,7 +433,7 @@ def parse_args():
     imagetype = "type of image to launch"
     parser.add_argument(
         "-t", "--imagetype", help=imagetype, choices=ERI_IMAGES.keys(),
-        default='single_gpu'
+        default='Python'
     )
 
     jupyter_pwd = (
