@@ -165,7 +165,7 @@ def active_eri_images(client=None, ignore_other_images=False):
             days, rem = divmod(td.total_seconds(), 86400)
             hours, rem = divmod(rem, 3600)
             minutes, seconds = divmod(rem, 60)
-            d['uptime'] = "{0:.0f} Days {1:0^2.0f}:{2:0^2.0f}:{3:0^2.0f}"\
+            d['uptime'] = "{0:.0f} Days {1:02.0f}:{2:02.0f}:{3:02.0f}"\
                 .format(days, hours, minutes, seconds)
         except Exception as e:
             d['uptime'] = str(e)
