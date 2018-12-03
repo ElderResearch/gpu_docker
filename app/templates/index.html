@@ -104,36 +104,23 @@
 </div>
 <div id="session-launcher-explainer">
     <h2 id="information">information</h2>
-<<<<<<< HEAD
-    <p>use the "launch a gpu session" form above to create a personal container running on the DC GPU machine. based on the image type (described below), you will be put into a development environment with one or more of the machine's four gpus will be exposed to you. you should be able to run any code you write with identical behavior in any environment; the only difference is the isolation of the gpus.</p>
-=======
-    <p>use the "launch a gpu session" form above to create a personal container running on the DC GPU machine. based on the image type (described below), you will be put into a development or production environment and one of the machine's two gpus
-        will be exposed to you. you should be able to run any code you write with identical behavior in either environment; the only difference is the isolation of the gpus.</p>
->>>>>>> expand to allow select arbitrary number of gpus
+    <p>use the "launch a gpu session" form above to create a personal container running on the DC GPU machine. based on the image type (described below), you will be put into a development environment with one or more of the machine's four gpus exposed to you. you should be able to run any code you write with identical behavior in any environment; the only difference is the isolation of the gpus.</p>
     <h3>requirements</h3>
     <p>there are few requirements you must satisfy before this will work for you.</p>
     <ol>
         <li>you must have a linux user on the gpu machine itself</li>
         <li>you must be on the ERI network to access the machine</li>
-        <li>if you are launching a <code>single_gpu</code> or <code>multi_gpu</code> image, there must be sufficiently many free gpu devices to launch image of that type.</li>
+        <li>if you are launching an image with gpus attached, there must be sufficiently many free gpu devices to support your request.</li>
     </ol>
-    <p>for help with all of the above, you need to contact the box admins. for now, direct all questions to the `#gpu_users` slack channel</p>
+    <p>for help with all of the above, you need to contact the box admins. for now, direct all questions to the <code>#gpu_users</code> slack channel</p>
     <h3>image types</h3>
     <p>we have implemented the following image types</p>
     <ul>
         <li>
-            <code>{single, multi}_gpu</code>: a python-only, gpu-aware development environment with full access to one or two gpus, respectively.
+            <code>python</code>: a python-only, gpu-aware development environment with full access to zero or more gpus.
         </li>
         <li>
-            <code>{single, multi}_gpu_w_r</code>: the same as the above with the addition of an <code>R</code> environment and a running <code>rstudio</code> server. this is still in development, so may be buggy!
-        </li>
-        <li>
-<<<<<<< HEAD
-            <code>no_gpu[_w_r]</code>: these are the same basic development environments as the ones above without any access to the gpu resources. you may want to use these for development of code that will later be submitted in the gpu-enabled images.
-=======
-            <code>no_gpu_dev</code>: this is the same basic development environment as the one in <code>gpu_{dev,prod}</code> without any access to the gpu resources. you may want to use this for development of code that will later be submitted in
-            the <code>gpu_dev</code> or <code>gpu_prod</code> slot
->>>>>>> expand to allow select arbitrary number of gpus
+            <code>python+R</code>: the same as the above with the addition of an <code>R</code> environment and a running <code>rstudio</code> server. this is still in development, so may be buggy!
         </li>
     </ul>
 </div>
