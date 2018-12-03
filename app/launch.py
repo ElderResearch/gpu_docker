@@ -106,24 +106,26 @@ def _env_lookup(c, key):
 def active_eri_images(client=None, ignore_other_images=False):
     client = client or docker.from_env()
     active = []
+    url = 'http://eri-gpu.cho.elderresearch.com'
 
     for c in client.containers.list():
         try:
             imagetype = c.attrs['Config']['Labels'].get('image_type', None)
-            image = ERI_IMAGES[imagetype]['image']
         except Exception as e:
             print('untagged image {}'.format(c.image.id))
             continue
 
-        # handle the untagged "latest" images:
-        if len(image.split(':')) < 2:
-            image = '{}:latest'.format(image)
-
         if ignore_other_images and (imagetype is None):
             continue
 
+        attached_gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
+        if attached_gpus:
+            num_gpus = len(attached_gpus.split(','))
+        else:
+            num_gpus = 0
+
         d = {
-            'image': image,
+            'num_gpus': num_gpus,
             'imagetype': imagetype,
             'id': c.id,
         }
@@ -141,8 +143,7 @@ def active_eri_images(client=None, ignore_other_images=False):
                 c.attrs['HostConfig']['PortBindings']['8888/tcp'][0]['HostPort']
             )
 
-            d['jupyter_url'] = 'http://eri-gpu.cho.elderresearch.com:{}'.format(
-                port)
+            d['jupyter_url'] = '{0}:{1}'.format(url, port)
 
         if imagetype in R_IMAGES:
             # similarly for the rstudio server, go find the port from the
@@ -151,8 +152,7 @@ def active_eri_images(client=None, ignore_other_images=False):
                 c.attrs['HostConfig']['PortBindings']['8787/tcp'][0]['HostPort']
             )
 
-            d['rstudio_url'] = 'http://eri-gpu.cho.elderresearch.com:{}'.format(
-                port)
+            d['rstudio_url'] = '{0}:{1}'.format(url, port)
 
         # check for a username environment variable
         d['username'] = _env_lookup(c, 'USER')

@@ -11,7 +11,7 @@
                 <tr>
                     <th scope="col">type</th>
                     <th scope="col">owner</th>
-                    <th scope="col">image name</th>
+                    <th scope="col"># attched gpus</th>
                     <th scope="col">jupyter url</th>
                     <th scope="col">rstudio url</th>
                     <th scope="col">docker id</th>
@@ -24,7 +24,7 @@
                 <tr>
                     <td>{{ x.imagetype }}</td>
                     <td>{{ x.username }}</td>
-                    <td>{{ x.image }}</td>
+                    <td>{{ x.num_gpus }}</td>
                     <td><a href="{{ x.jupyter_url }}">{{ x.jupyter_url[:14] + x.jupyter_url[36:]}}</a></td>
                     <td><a href="{{ x.rstudio_url }}">{{ x.get('rstudio_url','')[:14] + x.get('rstudio_url','')[36:] }}</a></td>
                     <td>{{ x.id[:10] }}</td>
