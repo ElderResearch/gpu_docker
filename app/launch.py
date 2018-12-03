@@ -161,7 +161,12 @@ def active_eri_images(client=None, ignore_other_images=False):
         try:
             t0 = dateutil.parser.parse(c.attrs['Created']).astimezone()
             t1 = datetime.datetime.now(tz=pytz.timezone('US/Eastern'))
-            d['uptime'] = str(t1 - t0)
+            td = t1 - t0
+            days, rem = divmod(td.total_seconds(), 86400)
+            hours, rem = divmod(rem, 3600)
+            minutes, seconds = divmod(rem, 60)
+            d['uptime'] = "{0:.0f} Days {1:0^2.0f}:{2:0^2.0f}:{3:0^2.0f}"\
+                .format(days, hours, minutes, seconds)
         except Exception as e:
             d['uptime'] = str(e)
 
