@@ -277,7 +277,7 @@ def launch(username, imagetype=None, jupyter_pwd=None, num_gpus=0, **kwargs):
 
     # check to see if launching the provided image is allowed
     client = docker.from_env()
-    launchable, msg = _validate_launch(imagetype, client)
+    launchable, msg = _validate_launch(num_gpus, client)
     if not launchable:
         return _error(msg)
 
