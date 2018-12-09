@@ -22,11 +22,9 @@ def home():
     return render_template(
         'index.html',
         launched_sessions=launched_sessions,
-        sessoptions=list(launch.ERI_IMAGES.keys()),
+        sessoptions=sorted(launch.ERI_IMAGES.keys()),
         num_avail_gpus=list(range(len(launch.AVAIL_DEVICES) + 1))
     )
-
-# #TODO(andrew.stewart): modify form to choose Python-only or both and choose # of GPUs
 
 
 @app.route('/createSession', methods=['POST'])

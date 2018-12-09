@@ -28,7 +28,7 @@
                     <td><a href="{{ x.jupyter_url }}">{{ x.jupyter_url[:14] + x.jupyter_url[36:]}}</a></td>
                     <td><a href="{{ x.rstudio_url }}">{{ x.get('rstudio_url','')[:14] + x.get('rstudio_url','')[36:] }}</a></td>
                     <td>{{ x.id[:10] }}</td>
-                    <td>{{ x.uptime }}</td> <!-- TODO: format the time output to remove decimals -->
+                    <td>{{ x.uptime }}</td>
                     <td>
                         <form action="/killSession" class="form-inline" method="POST">
                             <input type="hidden" id="kill-docker-id" name="docker_id" value="{{ x.id }}">
@@ -52,7 +52,6 @@
 <div id="session-launcher-form">
     <h2>launch a gpu session</h2>
     <form action="/createSession" method="POST">
-        <!-- TODO: Modify form to choose python or both and # of GPUs -->
         <div class="form-group">
             <label for="create-username" class="col-form-label">
                 User Name

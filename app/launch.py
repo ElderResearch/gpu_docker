@@ -39,7 +39,7 @@ AVAIL_DEVICES = set(['0', '1', '2', '3'])
 
 ERI_IMAGES = {
     'Python': {
-        'image': 'eri_dev:latest',  # TODO(andrew.stewart): rename images
+        'image': 'eri_dev:latest',
         'auto_remove': True,
         'detach': True,
         'ports': {8888: 'auto'}
@@ -357,13 +357,14 @@ def launch(username, imagetype=None, jupyter_pwd=None, num_gpus=0, **kwargs):
         }
     }
 
-    # if the NV_GPU environment variable was passed in via imagedict, set the
+    # if the user has requested gpus, set the
     # proper runtime value and add an environment variable flag
     if num_gpus > 0:
         imagedict['runtime'] = 'nvidia'
         # increasing shm_size to 8G. default if not set explicitly is 64M.
         # this prevents bus error when running pytorch in docker containers
         # see https://github.com/pytorch/pytorch/issues/2244
+        # perhaps this should be a multiple of num_gpus?
         imagedict['shm_size'] = '8G'
         gpu_ids = []
         for i in range(num_gpus):
