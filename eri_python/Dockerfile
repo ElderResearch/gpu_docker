@@ -5,7 +5,7 @@ FROM tensorflow/tensorflow:latest-gpu-py3
 LABEL maintainer="Zach Lamberty <zach.lamberty@elderresearch.com>"
 
 RUN apt-get update \
-        && apt-get install -y openssh-server \
+        && apt-get install -y openssh-server swig \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
