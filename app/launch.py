@@ -15,9 +15,9 @@ Usage:
 """
 
 import argparse
+import collections
 import copy
 import datetime
-import collections
 import hashlib
 import logging
 import os
@@ -29,58 +29,29 @@ import notebook.auth
 import psutil
 import pytz
 
-
 # ----------------------------- #
 #   Module Constants            #
 # ----------------------------- #
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 
-AVAIL_DEVICES=set(['0','1','2','3'])
+AVAIL_DEVICES = set(['0', '1', '2', '3'])
 
 ERI_IMAGES = {
-    'single_gpu': {
+    'Python': {
         'image': 'eri_dev:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': {8888: 'auto'},
-        'NV_GPU': 1,
+        'ports': {8888: 'auto'}
     },
-    'multi_gpu': {
-        'image': 'eri_dev:latest',
-        'auto_remove': True,
-        'detach': True,
-        'ports': {8888: 'auto'},
-        'NV_GPU': 2,
-    },
-    'single_gpu_w_r': {
+    'Python+R': {
         'image': 'eri_dev_p_r:latest',
         'auto_remove': True,
         'detach': True,
-        'ports': {8888: 'auto', 8787: 'auto'},
-        'NV_GPU': 1,
-    },
-    'multi_gpu_w_r': {
-        'image': 'eri_dev_p_r:latest',
-        'auto_remove': True,
-        'detach': True,
-        'ports': {8888: 'auto', 8787: 'auto'},
-        'NV_GPU': 2,
-    },
-    'no_gpu': {
-        'image': 'eri_nogpu_dev:latest',
-        'auto_remove': True,
-        'detach': True,
-        'ports': {8888: 'auto'},
-    },
-    'no_gpu_w_r': {
-        'image': 'eri_nogpu_dev_p_r:latest',
-        'auto_remove': True,
-        'detach': True,
-        'ports': {8888: 'auto', 8787: 'auto'},
+        'ports': {8888: 'auto', 8787: 'auto'}
     },
 }
-GPU_IMAGES = [k for (k, v) in ERI_IMAGES.items() if 'NV_GPU' in v]
+
 JUPYTER_IMAGES = [
     k for (k, v) in ERI_IMAGES.items() if 8888 in v.get('ports', {})
 ]
@@ -102,16 +73,18 @@ def _error(msg):
         'status': FAILURE,
     }
 
+
 def _update_avail_devices(client=None):
     """update set of gpus available for use"""
     global AVAIL_DEVICES
-    available_devices = set(['0','1','2','3'])
+    available_devices = set(['0', '1', '2', '3'])
     client = client or docker.from_env()
     for c in client.containers.list():
         gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
         if gpus:
             available_devices.difference_update(gpus.split(','))
     AVAIL_DEVICES = available_devices
+
 
 def _running_images(client=None, ignore_other_images=False):
     return [tag for c in client.containers.list() for tag in c.image.tags]
@@ -133,24 +106,26 @@ def _env_lookup(c, key):
 def active_eri_images(client=None, ignore_other_images=False):
     client = client or docker.from_env()
     active = []
+    url = 'http://eri-gpu.cho.elderresearch.com'
 
     for c in client.containers.list():
         try:
             imagetype = c.attrs['Config']['Labels'].get('image_type', None)
-            image = ERI_IMAGES[imagetype]['image']
         except Exception as e:
             print('untagged image {}'.format(c.image.id))
             continue
 
-        # handle the untagged "latest" images:
-        if len(image.split(':')) < 2:
-            image = '{}:latest'.format(image)
-
         if ignore_other_images and (imagetype is None):
             continue
 
+        attached_gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
+        if attached_gpus=='none':
+            num_gpus = 0
+        else:
+            num_gpus = len(attached_gpus.split(','))
+
         d = {
-            'image': image,
+            'num_gpus': num_gpus,
             'imagetype': imagetype,
             'id': c.id,
         }
@@ -168,7 +143,7 @@ def active_eri_images(client=None, ignore_other_images=False):
                 c.attrs['HostConfig']['PortBindings']['8888/tcp'][0]['HostPort']
             )
 
-            d['jupyter_url'] = 'http://eri-gpu.cho.elderresearch.com:{}'.format(port)
+            d['jupyter_url'] = '{0}:{1}'.format(url, port)
 
         if imagetype in R_IMAGES:
             # similarly for the rstudio server, go find the port from the
@@ -177,7 +152,7 @@ def active_eri_images(client=None, ignore_other_images=False):
                 c.attrs['HostConfig']['PortBindings']['8787/tcp'][0]['HostPort']
             )
 
-            d['rstudio_url'] = 'http://eri-gpu.cho.elderresearch.com:{}'.format(port)
+            d['rstudio_url'] = '{0}:{1}'.format(url, port)
 
         # check for a username environment variable
         d['username'] = _env_lookup(c, 'USER')
@@ -186,7 +161,12 @@ def active_eri_images(client=None, ignore_other_images=False):
         try:
             t0 = dateutil.parser.parse(c.attrs['Created']).astimezone()
             t1 = datetime.datetime.now(tz=pytz.timezone('US/Eastern'))
-            d['uptime'] = str(t1 - t0)
+            td = t1 - t0
+            days, rem = divmod(td.total_seconds(), 86400)
+            hours, rem = divmod(rem, 3600)
+            minutes, seconds = divmod(rem, 60)
+            d['uptime'] = "{0:.0f} Days {1:02.0f}:{2:02.0f}:{3:02.0f}"\
+                .format(days, hours, minutes, seconds)
         except Exception as e:
             d['uptime'] = str(e)
 
@@ -195,12 +175,11 @@ def active_eri_images(client=None, ignore_other_images=False):
     return active
 
 
-def _validate_launch(imagetype='single_gpu', client=None):
+def _validate_launch(num_gpus, client=None):
     """basically, ensure enough gpus available for use
 
     args:
-        imagetype (str): module-specific enumeration of available images
-            (default: 'single_gpu', which points to docker image `eri_dev:latest`)
+        num_gpus (int): number of desired gpus
         client (docker.client.DockerClient): the docker client object
             (default: None, which builds the basic client using
             `docker.from_env`)
@@ -213,17 +192,13 @@ def _validate_launch(imagetype='single_gpu', client=None):
 
     """
     client = client or docker.from_env()
-    if imagetype in GPU_IMAGES:
-        if ERI_IMAGES[imagetype]['NV_GPU'] > len(AVAIL_DEVICES):
-            return (
-                False,
-                "only {} gpus available at this time".format(
-                    len(AVAIL_DEVICES)
-                    )
-            )
-        else:
-            return True, None
-    elif imagetype in ERI_IMAGES:
+
+    if num_gpus > len(AVAIL_DEVICES):
+        return (
+            False,
+            "only {} gpus available at this time".format(len(AVAIL_DEVICES))
+        )
+    else:
         return True, None
 
     # not defined
@@ -277,7 +252,7 @@ def _find_open_port(start=8890, stop=9000):
     )
 
 
-def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
+def launch(username, imagetype=None, jupyter_pwd=None, num_gpus=0, **kwargs):
     """launch a docker container for user `username` of type `imagetype`
 
     args:
@@ -285,6 +260,7 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         imagetype (str): module-specific enumeration of available images
             (default: 'single_gpu', which points to docker image `eri_dev:latest`)
         jupyter_pwd (str): password for jupyter notebook signin
+        num_gpus (int): number of gpus to assign to container
         kwargs (dict): all other keyword args are passed to the
             `client.containers.run` function
 
@@ -297,6 +273,7 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         None
 
     """
+    num_gpus = int(num_gpus)
     # is this image type defined (could just check image names directly...)
     try:
         imagedict = copy.deepcopy(ERI_IMAGES[imagetype])
@@ -305,7 +282,7 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
 
     # check to see if launching the provided image is allowed
     client = docker.from_env()
-    launchable, msg = _validate_launch(imagetype, client)
+    launchable, msg = _validate_launch(num_gpus, client)
     if not launchable:
         return _error(msg)
 
@@ -380,16 +357,17 @@ def launch(username, imagetype='single_gpu', jupyter_pwd=None, **kwargs):
         }
     }
 
-    # if the NV_GPU environment variable was passed in via imagedict, set the
+    # if the user has requested gpus, set the
     # proper runtime value and add an environment variable flag
-    if imagetype in GPU_IMAGES:
+    if num_gpus > 0:
         imagedict['runtime'] = 'nvidia'
         # increasing shm_size to 8G. default if not set explicitly is 64M.
         # this prevents bus error when running pytorch in docker containers
         # see https://github.com/pytorch/pytorch/issues/2244
+        # perhaps this should be a multiple of num_gpus?
         imagedict['shm_size'] = '8G'
         gpu_ids = []
-        for i in range(imagedict.pop('NV_GPU')):
+        for i in range(num_gpus):
             gpu_ids.append(AVAIL_DEVICES.pop())
         _update_environment(
             imagedict,
@@ -461,7 +439,7 @@ def parse_args():
     imagetype = "type of image to launch"
     parser.add_argument(
         "-t", "--imagetype", help=imagetype, choices=ERI_IMAGES.keys(),
-        default='single_gpu'
+        default='Python'
     )
 
     jupyter_pwd = (

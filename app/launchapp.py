@@ -1,10 +1,11 @@
-from flask import (Flask, flash, render_template, redirect, request, url_for)
+import hashlib
+
+import launch
+from flask import Flask, flash, redirect, render_template, request, url_for
 
 app = Flask('docker_launcher')
 app.secret_key = '\xc8d\x19E}\xa5g\xbbC\xbd\xe2\x17\x83\xfa!>\xead\x07p\xbd\x92\xce\x85'
 
-import hashlib
-import launch
 
 HISTORY = []
 LAUNCHED_SESSIONS = []
@@ -13,27 +14,16 @@ FLASH_CLS = {
     'success': "alert alert-success",
 }
 
+
 @app.route('/', methods=['GET'])
 def home():
     launched_sessions = launch.active_eri_images(ignore_other_images=True)
 
-    if len(launch.AVAIL_DEVICES) > 1:
-        sessoptions = list(launch.ERI_IMAGES.keys())
-        disabled_options = {}
-    elif len(launch.AVAIL_DEVICES) == 1:
-        sessoptions = [k for k in launch.ERI_IMAGES.keys() if 'multi' not in k]
-        disabled_options = {k for k in launch.ERI_IMAGES.keys() if 'multi' in k}
-    else:
-        sessoptions = [k for k in launch.ERI_IMAGES.keys() if 'no_gpu' in k]
-        disabled_options = {
-            k for k in launch.ERI_IMAGES.keys() if 'no_gpu' not in k
-        }
-
     return render_template(
         'index.html',
         launched_sessions=launched_sessions,
-        disabled_options=disabled_options,
-        sessoptions=sessoptions,
+        sessoptions=sorted(launch.ERI_IMAGES.keys()),
+        num_avail_gpus=list(range(len(launch.AVAIL_DEVICES) + 1))
     )
 
 
@@ -43,6 +33,7 @@ def create_session():
         username=request.form['username'],
         imagetype=request.form['imagetype'],
         jupyter_pwd=request.form['jupyter_pwd'],
+        num_gpus=request.form['num_gpus']
     )
     HISTORY.append(resp)
 
