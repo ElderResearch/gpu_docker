@@ -55,7 +55,7 @@ RUN pip --no-cache-dir install \
         xlrd
 
 # pytorch is also special, install from a wheel on their webpage
-RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl
+RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-1.0.0-cp35-cp35m-linux_x86_64.whl
 RUN pip install torchvision
 
 # onnx requires some additional *nix libraries
