@@ -119,10 +119,10 @@ def active_eri_images(client=None, ignore_other_images=False):
             continue
 
         attached_gpus = _env_lookup(c, 'NVIDIA_VISIBLE_DEVICES')
-        if attached_gpus:
-            num_gpus = len(attached_gpus.split(','))
-        else:
+        if attached_gpus=='none':
             num_gpus = 0
+        else:
+            num_gpus = len(attached_gpus.split(','))
 
         d = {
             'num_gpus': num_gpus,
