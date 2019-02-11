@@ -16,3 +16,19 @@ the way I have run this in the past is as follows (talk to andrew stewart to see
 1. leave the screen with the keyboard command sequence `Ctrl + a, d`
 
 in the future, if you need to re-connect to the screen to check on the app itself, you can do so with `screen -r [id|alias`. you will have to provide the screen id number or the screen alias; both can be seen from `screen -list`
+
+### killing
+
+if you need to kill someone else's running `screen` process, search for it via
+
+```sh
+ps -aef | grep launchapp
+```
+
+or
+
+```sh
+ps -aef | grep flask
+```
+
+(depending on how it was launched), and kill that process. then, create your own `screen` and start the app
