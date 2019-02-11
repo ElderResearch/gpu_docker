@@ -11,10 +11,18 @@ there are several images that are simple layers on top of other images, so here'
 2. [`eri_python`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_python/Dockerfile)
     1. installs the most commonly used `python` libraries into an existing `lambdastack` image
 3. [`eri_dev`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_dev/Dockerfile)
-    1. a development environment with the primary development access points / services up and running (e.g. a `jupyter notebook` server running on an exposed port, `rstudio` on another), as well as basic volume mounting for shared data 
+    1. a development environment with the primary development access points / services up and running (e.g. a `jupyter notebook` server running on an exposed port, `rstudio` on another), as well as basic volume mounting for shared data
 
 
 ## making updates without automation
+
+basically, run andrew's build script:
+
+``` sh
+./build.sh
+```
+
+### old instructions
 
 until we have set up a nightly or automated build, please take care to increment versions on images and tag things appropriately. we should be able to rebuild all images based on some overall `git` version tag someday, but not today!
 
@@ -22,3 +30,8 @@ for now the process should be roughly as follows: for each image in the dependen
 
 1. `docker build --no-cache -t IMAGE_TAG_NAME .`
 1. `docker tag NEWSHANUMBER IMAGE_TAG_NAME:vX.Y.Z`
+
+
+## running the launcher webapp
+
+instructions on how to run the launcher webapp are in the `app/` directory
