@@ -1,11 +1,11 @@
 import hashlib
 
-import launch
+from . import launch
 from flask import Flask, flash, redirect, render_template, request, url_for
 
-app = Flask('docker_launcher')
+app = Flask('docker_launcher', template_folder='/var/www/gpu_docker/app/templates')
 app.secret_key = '\xc8d\x19E}\xa5g\xbbC\xbd\xe2\x17\x83\xfa!>\xead\x07p\xbd\x92\xce\x85'
-
+app.debug = True
 
 HISTORY = []
 LAUNCHED_SESSIONS = []
