@@ -3,3 +3,4 @@ docker==3.3.0
 notebook>=5.4.1
 python-dateutil>=2.7.2
 pytz>=2018.4
+psutil>=5.5.0
