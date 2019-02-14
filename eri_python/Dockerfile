@@ -1,11 +1,16 @@
 # based almost entirely off of the tensorflow/tensorflow gpu-based docker image,
 # with slight tweaks for our personal use
-FROM tensorflow/tensorflow:latest-gpu-py3
+FROM tensorflow/tensorflow:1.12.0-gpu-py3
 
 LABEL maintainer="Zach Lamberty <zach.lamberty@elderresearch.com>"
 
-RUN apt-get update \
-        && apt-get install -y openssh-server swig \
+RUN apt update && apt -y install locales
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+RUN apt-get install -y openssh-server swig unixodbc-dev \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
@@ -45,6 +50,7 @@ RUN pip --no-cache-dir install \
         plotly \
         psycopg2 \
         pyarrow \
+	pyodbc \
         requests \
         seaborn \
         smac \
