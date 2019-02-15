@@ -16,6 +16,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
 RUN apt-get install -y openssh-server swig unixodbc-dev \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends krb5-user \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
