@@ -10,6 +10,11 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+        && curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+
+RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
+
 RUN apt-get install -y openssh-server swig unixodbc-dev \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
