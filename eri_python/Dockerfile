@@ -52,6 +52,7 @@ RUN pip --no-cache-dir install \
         networkx \
         nltk \
         numba \
+        opencv-contrib-python \
         Pillow \
         plotly \
         psycopg2 \
