@@ -104,12 +104,15 @@ WORKDIR /opt/darknet
 
 # 2. change gpu flag with the best editor, sed
 RUN sed -i -e 's/GPU=0/GPU=1/' Makefile
+RUN sed -i -e 's/# ARCH= -gencode arch=compute_52,code=compute_52/ARCH= -gencode arch=compute_70,code=compute_70/' Makefile
 
 # 3. install other dependencies (header files)
 RUN apt-get install --no-install-recommends -y cuda-curand-dev-9-0 \
                                                cuda-cublas-dev-9-0
 
 # 4. make and move
+#RUN export PATH=/usr/local/cuda-9.0/bin${PATH:+:${PATH}}
+RUN ln -s /usr/local/cuda/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda/lib64/libcuda.so
 RUN make
 RUN mv darknet /usr/local/bin
 
@@ -123,4 +126,7 @@ WORKDIR /
 # end darknet install ----------------------------------------------------------
 
 # install gsl
-RUN apt-get install --no-install-recommends -y libgsl-dev
+RUN apt-get install --no-install-recommends -y libgsl-dev \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/* \
+        && rm /*.whl
