@@ -30,8 +30,3 @@ for now the process should be roughly as follows: for each image in the dependen
 
 1. `docker build --no-cache -t IMAGE_TAG_NAME .`
 1. `docker tag NEWSHANUMBER IMAGE_TAG_NAME:vX.Y.Z`
-
-
-## running the launcher webapp
-
-instructions on how to run the launcher webapp are in the `app/` directory
