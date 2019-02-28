@@ -70,7 +70,7 @@ RUN python3 -m pip --no-cache-dir install \
         plotly \
         psycopg2 \
         pyarrow \
-	      pyodbc \
+        pyodbc \
         requests \
         seaborn \
         smac \
