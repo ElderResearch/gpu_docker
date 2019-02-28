@@ -27,7 +27,7 @@ RUN apt-get install -y openssh-server swig unixodbc-dev \
 # generic pip installs of all the most basic bad lads
 # separating out expensive installations just for some caching love
 RUN pip --no-cache-dir install spacy
-RUN pip --no-cache-dir install mxnet-cu90
+RUN pip --no-cache-dir install mxnet-cu100
 
 # install dependencies for smac
 RUN pip --no-cache-dir install \
@@ -61,7 +61,7 @@ RUN pip --no-cache-dir install \
         plotly \
         psycopg2 \
         pyarrow \
-	      pyodbc \
+        pyodbc \
         requests \
         seaborn \
         smac \
