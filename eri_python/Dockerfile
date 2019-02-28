@@ -12,7 +12,7 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # add path to libcuda.so to LD_LIBRARY_PATH
-RUN export LD_LIBRARY_PATH=/usr/local/cuda/compat/:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH "/usr/local/cuda/compat:$LD_LIBRARY_PATH"
 
 # add microsoft repository for mssql
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
