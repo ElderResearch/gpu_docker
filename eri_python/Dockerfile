@@ -1,6 +1,6 @@
 # based almost entirely off of the tensorflow/tensorflow gpu-based docker image,
 # with slight tweaks for our personal use
-FROM tensorflow/tensorflow:1.13.0rc2-gpu-py3
+FROM tensorflow/tensorflow:1.13.1-gpu-py3
 
 LABEL creator="Zach Lamberty <zach.lamberty@elderresearch.com>"
 LABEL maintainer="Andrew Stewart <andrew.stewart@elderresearch.com>"
