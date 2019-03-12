@@ -17,6 +17,7 @@ RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
 RUN apt-get install -y openssh-server swig unixodbc-dev \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends krb5-user \
+	&& apt-get install -y graphviz \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
