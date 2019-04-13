@@ -15,14 +15,15 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
-RUN apt-get install -y openssh-server swig unixodbc-dev \
+RUN apt-get install -y openssh-server swig unixodbc-dev libpq-dev \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends krb5-user \
-	&& apt-get install -y graphviz \
+	&& apt-get install -y graphviz libicu-dev \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
 # generic pip installs of all the most basic bad lads
 # separating out expensive installations just for some caching love
+RUN pip install --upgrade pip
 RUN pip --no-cache-dir install spacy
 RUN pip --no-cache-dir install mxnet-cu90
 
@@ -86,7 +87,8 @@ RUN apt-get install --no-install-recommends -y less git vim
 
 # install spacy `en` model and set relevant environment variables
 # c.f. https://github.com/explosion/spaCy/issues/1721
-RUN python -m spacy download en
+RUN python -m spacy download en 
+RUN python -m spacy download en_core_web_lg
 
 # download some of the nltk libraries
 #RUN python -m nltk.downloader all
