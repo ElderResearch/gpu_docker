@@ -9,3 +9,6 @@ c.NotebookApp.open_browser = False
 if 'PASSWORD' in os.environ:
     c.NotebookApp.password = os.environ['PASSWORD']
 
+if 'JUPYTERTOKEN' in os.environ:
+    c.NotebookApp.password = os.environ['JUPYTERTOKEN']
+
