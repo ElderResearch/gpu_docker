@@ -17,18 +17,23 @@ RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
 RUN apt-get install -y openssh-server swig unixodbc-dev libpq-dev \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends krb5-user \
-	&& apt-get install -y graphviz libicu-dev \
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/*
+	&& apt-get install -y graphviz libicu-dev
+
+# install nodejs
+RUN apt-get install -y python-software-properties \
+    && curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get purge -y python-software-properties
 
 # generic pip installs of all the most basic bad lads
 # separating out expensive installations just for some caching love
-RUN pip install --upgrade pip
-RUN pip --no-cache-dir install spacy
-RUN pip --no-cache-dir install mxnet-cu90
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip --no-cache-dir install spacy
+RUN python3 -m pip --no-cache-dir install mxnet-cu90
 
 # install dependencies for smac
-RUN pip --no-cache-dir install \
+RUN python3 -m pip --no-cache-dir install pybind11 \
+    && python3 -m pip --no-cache-dir install \
     	ConfigSpace \
     	emcee \
     	george \
@@ -40,7 +45,7 @@ RUN pip --no-cache-dir install \
     	statsmodels
 
 # and now the rest
-RUN pip --no-cache-dir install \
+RUN python3 -m pip --no-cache-dir install \
         boto3 \
         cssselect \
         gensim \
@@ -69,9 +74,15 @@ RUN pip --no-cache-dir install \
         tqdm \
         xlrd
 
+RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
+    && jupyter nbextension enable --py --sys-prefix widgetsnbextension \
+    && jupyter labextension install @jupyter-widgets/jupyterlab-manager \
+    && jupyter labextension install @jupyterlab/plotly-extension \
+    && jupyter labextension install jupyter-matplotlib
+
 # pytorch is also special, install from a wheel on their webpage
-RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-1.0.0-cp35-cp35m-linux_x86_64.whl
-RUN pip install torchvision
+RUN python3 -m pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-1.0.0-cp35-cp35m-linux_x86_64.whl
+RUN python3 -m pip --no-cache-dir install torchvision
 
 # onnx requires some additional *nix libraries
 RUN apt-get update && \
@@ -79,7 +90,7 @@ RUN apt-get update && \
 RUN ONNX_ML=1 pip --no-cache-dir install onnx
 
 # ipython kernel
-RUN python -m ipykernel.kernelspec
+RUN python3 -m ipykernel.kernelspec
 
 # finally, not python stuff, but I want the following stuff to be generally
 # available in all downstream images
@@ -87,12 +98,12 @@ RUN apt-get install --no-install-recommends -y less git vim
 
 # install spacy `en` model and set relevant environment variables
 # c.f. https://github.com/explosion/spaCy/issues/1721
-RUN python -m spacy download en 
-RUN python -m spacy download en_core_web_lg
+RUN python3 -m spacy download en 
+RUN python3 -m spacy download en_core_web_lg
 
 # download some of the nltk libraries
 #RUN python -m nltk.downloader all
-RUN python -m nltk.downloader punkt
+RUN python3 -m nltk.downloader punkt
 
 # the numba install gets its own special environment variables
 ENV NUMBAPRO_NVVM /usr/local/cuda-9.0/nvvm/lib64/libnvvm.so

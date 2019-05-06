@@ -11,16 +11,17 @@
 #   -v /home/zlamberty:/home/zlamberty:rw \
 #   -v /data:/data:rw \
 #   -u $( id -u $USER ):$( id -g $USER ) \
+#   -e PASSWORD=test
 #   eri_dev
 #
 # obviously, replace the `-u` line above with desired user information
 
 FROM eri_python:latest
 
-# expose jupyter notebook and set up the port forwarding
+# expose jupyter lab and set up the port forwarding
 EXPOSE 8888
 
-# notebook config has to beinitialized, following the tensorflow docker folks'
+# jupyter lab config has to be initialized, following the tensorflow docker folks'
 # lead here
 COPY jupyter_notebook_config.py /
 

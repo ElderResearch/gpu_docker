@@ -10,7 +10,7 @@
 #   -v /home/zlamberty:/userhome:rw \
 #   -v /data:/data:rw \
 #   -u $( id -u $USER ):$( id -g $USER ) \
-#   -e USER=$USER
+#   -e USER=$USER \
 #   -e PASSWORD=$PASSWORD
 #   eri_dev_p_r
 #
