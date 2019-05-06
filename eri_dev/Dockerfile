@@ -18,8 +18,6 @@
 
 FROM eri_python:latest
 
-RUN pip install jupyterlab
-
 # expose jupyter lab and set up the port forwarding
 EXPOSE 8888
 
