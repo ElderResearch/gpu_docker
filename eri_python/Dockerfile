@@ -81,7 +81,7 @@ RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
     && jupyter labextension install jupyter-matplotlib
 
 # pytorch is also special, install from a wheel on their webpage
-RUN python3 -m pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-1.0.0-cp35-cp35m-linux_x86_64.whl
+RUN python3 -m pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-1.1.0-cp35-cp35m-linux_x86_64.whl
 RUN python3 -m pip --no-cache-dir install torchvision
 
 # onnx requires some additional *nix libraries
