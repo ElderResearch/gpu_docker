@@ -11,9 +11,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-# add path to libcuda.so to LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH "/usr/local/cuda/compat:$LD_LIBRARY_PATH"
-
 # add microsoft repository for mssql
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
         && curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
@@ -35,7 +32,7 @@ RUN apt-get install -y python-software-properties \
 # separating out expensive installations just for some caching love
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip --no-cache-dir install spacy
-RUN python3 -m pip --no-cache-dir install mxnet-cu90
+RUN python3 -m pip --no-cache-dir install mxnet-cu100
 
 # install dependencies for smac
 RUN python3 -m pip --no-cache-dir install pybind11 \
@@ -57,7 +54,6 @@ RUN python3 -m pip --no-cache-dir install \
         gensim \
         ipykernel \
         jupyter \
-        jupyter-tensorboard \
         keras \
         lxml \
         matplotlib \
@@ -87,7 +83,7 @@ RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
     && jupyter labextension install jupyter-matplotlib
 
 # pytorch is also special, install from a wheel on their webpage
-RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu100/torch-1.0.1.post2-cp35-cp35m-linux_x86_64.whl
+RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu100/torch-1.1.0-cp35-cp35m-linux_x86_64.whl
 RUN pip install torchvision
 
 # onnx requires some additional *nix libraries
