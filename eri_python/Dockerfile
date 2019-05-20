@@ -1,8 +1,9 @@
 # based almost entirely off of the tensorflow/tensorflow gpu-based docker image,
 # with slight tweaks for our personal use
-FROM tensorflow/tensorflow:1.12.0-gpu-py3
+FROM tensorflow/tensorflow:1.13.1-gpu-py3
 
-LABEL maintainer="Zach Lamberty <zach.lamberty@elderresearch.com>"
+LABEL creator="Zach Lamberty <zach.lamberty@elderresearch.com>"
+LABEL maintainer="Andrew Stewart <andrew.stewart@elderresearch.com>"
 
 RUN apt update && apt -y install locales
 RUN locale-gen en_US.UTF-8
@@ -10,9 +11,11 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
+# add microsoft repository for mssql
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
         && curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
+# install mssql drivers
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
 RUN apt-get install -y openssh-server swig unixodbc-dev libpq-dev \
@@ -29,7 +32,7 @@ RUN apt-get install -y python-software-properties \
 # separating out expensive installations just for some caching love
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip --no-cache-dir install spacy
-RUN python3 -m pip --no-cache-dir install mxnet-cu90
+RUN python3 -m pip --no-cache-dir install mxnet-cu100
 
 # install dependencies for smac
 RUN python3 -m pip --no-cache-dir install pybind11 \
@@ -51,7 +54,6 @@ RUN python3 -m pip --no-cache-dir install \
         gensim \
         ipykernel \
         jupyter \
-        jupyter-tensorboard \
         keras \
         lxml \
         matplotlib \
@@ -64,7 +66,7 @@ RUN python3 -m pip --no-cache-dir install \
         plotly \
         psycopg2 \
         pyarrow \
-	pyodbc \
+        pyodbc \
         requests \
         seaborn \
         smac \
@@ -81,8 +83,8 @@ RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
     && jupyter labextension install jupyter-matplotlib
 
 # pytorch is also special, install from a wheel on their webpage
-RUN python3 -m pip --no-cache-dir install http://download.pytorch.org/whl/cu90/torch-1.1.0-cp35-cp35m-linux_x86_64.whl
-RUN python3 -m pip --no-cache-dir install torchvision
+RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu100/torch-1.1.0-cp35-cp35m-linux_x86_64.whl
+RUN pip install torchvision
 
 # onnx requires some additional *nix libraries
 RUN apt-get update && \
@@ -106,8 +108,8 @@ RUN python3 -m spacy download en_core_web_lg
 RUN python3 -m nltk.downloader punkt
 
 # the numba install gets its own special environment variables
-ENV NUMBAPRO_NVVM /usr/local/cuda-9.0/nvvm/lib64/libnvvm.so
-ENV NUMBAPRO_LIBDEVICE /usr/local/cuda-9.0/nvvm/libdevice/
+ENV NUMBAPRO_NVVM /usr/local/cuda-10.0/nvvm/lib64/libnvvm.so
+ENV NUMBAPRO_LIBDEVICE /usr/local/cuda-10.0/nvvm/libdevice/
 
 
 # install darknet (in stages) --------------------------------------------------
@@ -122,18 +124,17 @@ RUN sed -i -e 's/GPU=0/GPU=1/' Makefile
 RUN sed -i -e 's/# ARCH= -gencode arch=compute_52,code=compute_52/ARCH= -gencode arch=compute_70,code=compute_70/' Makefile
 
 # 3. install other dependencies (header files)
-RUN apt-get install --no-install-recommends -y cuda-curand-dev-9-0 \
-                                               cuda-cublas-dev-9-0
+RUN apt-get install --no-install-recommends -y cuda-curand-dev-10-0 \
+                                               cuda-cublas-dev-10-0
 
 # 4. make and move
-#RUN export PATH=/usr/local/cuda-9.0/bin${PATH:+:${PATH}}
-RUN ln -s /usr/local/cuda/targets/x86_64-linux/lib/stubs/libcuda.so /usr/local/cuda/lib64/libcuda.so
+RUN ln -s /usr/local/cuda/compat/libcuda.so /usr/local/cuda/lib64/libcuda.so
 RUN make
 RUN mv darknet /usr/local/bin
 
 # 5. uninstall that stupid header stuff
-RUN apt-get remove -y cuda-curand-dev-9-0 \
-                      cuda-cublas-dev-9-0
+RUN apt-get remove -y cuda-curand-dev-10-0 \
+                      cuda-cublas-dev-10-0
 
 # 6. clean up
 WORKDIR /
@@ -144,4 +145,5 @@ WORKDIR /
 RUN apt-get install --no-install-recommends -y libgsl-dev \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/* \
-        && rm /*.whl
+        && rm -rf /usr/share/python-wheels/ \
+        && rm -rf /root/.cache/

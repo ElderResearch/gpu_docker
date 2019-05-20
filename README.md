@@ -6,21 +6,32 @@ each directory in this repository is a separate context for a docker image, and 
 
 there are several images that are simple layers on top of other images, so here's a brief rundown of the ones we have defined so far
 
-1. [`lambdastack`](https://github.com/ElderResearch/gpu_docker/blob/master/lambdastack/Dockerfile)
-    1. this is simply a very basic `ubuntu:16.04` image with the `lambdastack` repositories installed on top of it as described [here](https://lambdal.com/lambda-stack-deep-learning-software).
+1. [`lambdastack`](https://github.com/ElderResearch/gpu_docker/blob/master/lambdastack/Dockerfile) (deprecated)
+ - this is simply a very basic `ubuntu:16.04` image with the `lambdastack` repositories installed on top of it as described [here](https://lambdal.com/lambda-stack-deep-learning-software).
 2. [`eri_python`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_python/Dockerfile)
-    1. installs the most commonly used `python` libraries into an existing `lambdastack` image
+ - installs the most commonly used `python` libraries into a [`tensorflow/tensorflow`](https://hub.docker.com/r/tensorflow/tensorflow) base image
 3. [`eri_dev`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_dev/Dockerfile)
-    1. a development environment with the primary development access points / services up and running (e.g. a `jupyter notebook` server running on an exposed port, `rstudio` on another), as well as basic volume mounting for shared data
-
+ - a development environment with a `jupyter notebook` server running on an exposed port, as well as basic volume mounting for shared data
+4. [`eri_python_r`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_python_r/Dockerfile)
+ - installs `Rstudio` and the most commonly used `R` libraries into an existing `eri_python` image
+5. [`eri_dev_p_r`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_dev_p_r/Dockerfile)
+ - a development environment with a `jupyter notebook` server and an `Rstudio` server running on exposed ports, as well as basic volume mounting for shared data
 
 ## making updates without automation
 
 basically, run andrew's build script:
 
-``` sh
-./build.sh
+```sh
+python3 build.py
 ```
+
+the build script has a few optional arguments to configure different build parameters. access the help menu for more info:
+
+```sh
+python3 build.py --help
+```
+
+rotating build logs are saved to `/var/log/gpu_docker/build.log` (with fallback `./logs/build.log`) to aid in debugging failed builds.
 
 ### old instructions
 
@@ -30,8 +41,3 @@ for now the process should be roughly as follows: for each image in the dependen
 
 1. `docker build --no-cache -t IMAGE_TAG_NAME .`
 1. `docker tag NEWSHANUMBER IMAGE_TAG_NAME:vX.Y.Z`
-
-
-## running the launcher webapp
-
-instructions on how to run the launcher webapp are in the `app/` directory

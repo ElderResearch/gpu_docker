@@ -2,3 +2,4 @@
 .ftpconfig
 *venv/
 *__pycache__/
+logs
