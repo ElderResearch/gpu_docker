@@ -1,21 +1,21 @@
 # gpu instance image dockerfiles
 
-each directory in this repository is a separate context for a docker image, and collectively they define the dev and prod images we intend to use for gpu analytics on the gpu dev box in the DC office. the images themselves will (eventually) be built automatically, but they will always live on the gpu box (and hopefully dockerhub, soon).
+each directory in this repository is a separate context for a docker image. These images allow users of our gpu box to launch isolated docker containers, with GPUs attached, for the ultimate experience in computation<sup>TM</sup>. The images are regularly re-built and live on the gpu box (and hopefully dockerhub, soon).
 
 ## layers
 
-there are several images that are simple layers on top of other images, so here's a brief rundown of the ones we have defined so far
+there are several images that are simple layers on top of other images, so here's a brief rundown of the ones we have defined so far:
 
-1. [`lambdastack`](https://github.com/ElderResearch/gpu_docker/blob/master/lambdastack/Dockerfile) (deprecated)
- - this is simply a very basic `ubuntu:16.04` image with the `lambdastack` repositories installed on top of it as described [here](https://lambdal.com/lambda-stack-deep-learning-software).
+1. [`tensorflow`](https://hub.docker.com/r/tensorflow/tensorflow/tags)
+ - The official `tensorflow` Docker images, as defined [here](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/tools/dockerfiles)
 2. [`eri_python`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_python/Dockerfile)
- - installs the most commonly used `python` libraries into a [`tensorflow/tensorflow`](https://hub.docker.com/r/tensorflow/tensorflow) base image
+ - starts with the `tensorflow` base image and installs the most commonly used `python` libraries
 3. [`eri_dev`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_dev/Dockerfile)
- - a development environment with a `jupyter notebook` server running on an exposed port, as well as basic volume mounting for shared data
+ - a development environment baesd on `eri_dev` with a `jupyter lab` server running on an exposed port, as well as basic volume mounting for shared data
 4. [`eri_python_r`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_python_r/Dockerfile)
- - installs `Rstudio` and the most commonly used `R` libraries into an existing `eri_python` image
+ - installs `Rstudio` and the most commonly used `R` libraries on top of the `eri_python` image
 5. [`eri_dev_p_r`](https://github.com/ElderResearch/gpu_docker/blob/master/eri_dev_p_r/Dockerfile)
- - a development environment with a `jupyter notebook` server and an `Rstudio` server running on exposed ports, as well as basic volume mounting for shared data
+ - a development environment based on `eri_python_r` with a `jupyter lab` server and an `Rstudio` server running on exposed ports, as well as basic volume mounting for shared data
 
 ## making updates without automation
 
