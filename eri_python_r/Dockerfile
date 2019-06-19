@@ -2,7 +2,7 @@ FROM eri_python:latest
 
 # update the cran deb repo source
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-RUN echo deb http://cran.revolutionanalytics.com/bin/linux/ubuntu xenial/ > /etc/apt/sources.list.d/cran.list
+RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends default-jre default-jdk
@@ -20,7 +20,6 @@ RUN apt-get install -y --no-install-recommends \
     r-cran-mgcv \
     r-cran-nlme \
     r-cran-nnet \
-    r-cran-rjava \
     r-cran-rodbc \
     r-cran-rpart \
     r-cran-spatial \
