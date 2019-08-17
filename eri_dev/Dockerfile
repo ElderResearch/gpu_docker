@@ -21,6 +21,9 @@ FROM eri_python:latest
 # expose jupyter lab and set up the port forwarding
 EXPOSE 8888
 
+# expose tensorboard and set up the port forwarding
+EXPOSE 8008
+
 # jupyter lab config has to be initialized, following the tensorflow docker folks'
 # lead here
 COPY jupyter_notebook_config.py /

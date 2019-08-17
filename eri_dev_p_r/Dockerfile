@@ -20,7 +20,12 @@ FROM eri_python_r:latest
 
 # expose jupyter notebook and set up the port forwarding
 EXPOSE 8888
+
+# expose rstudio server and set up the port forwarding
 EXPOSE 8787
+
+# expose tensorboard and set up the port forwarding
+EXPOSE 8008
 
 # notebook config has to beinitialized, following the tensorflow docker folks'
 # lead here
