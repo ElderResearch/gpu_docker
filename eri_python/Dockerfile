@@ -5,11 +5,16 @@ FROM tensorflow/tensorflow:1.14.0-gpu-py3
 LABEL creator="Zach Lamberty <zach.lamberty@elderresearch.com>"
 LABEL maintainer="Andrew Stewart <andrew.stewart@elderresearch.com>"
 
-RUN apt update && apt -y install locales
-RUN locale-gen en_US.UTF-8
+ARG DEBIAN_FRONTEND=noninteractive
+
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+
+RUN apt update && apt -y install locales
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && /usr/sbin/update-locale LANG=en_US.UTF-8
 
 # add microsoft repository for mssql
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
