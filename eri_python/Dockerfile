@@ -74,6 +74,7 @@ RUN python3 -m pip --no-cache-dir install \
         sqlalchemy \
         tables \
         tqdm \
+        virtualenv \
         xlrd
 
 RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
