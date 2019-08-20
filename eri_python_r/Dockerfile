@@ -2,7 +2,7 @@ FROM eri_python:latest
 
 # update the cran deb repo source
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/'
+RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends default-jre default-jdk
