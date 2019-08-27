@@ -1,19 +1,24 @@
 # based almost entirely off of the tensorflow/tensorflow gpu-based docker image,
 # with slight tweaks for our personal use
-FROM tensorflow/tensorflow:1.13.1-gpu-py3
+FROM tensorflow/tensorflow:1.14.0-gpu-py3
 
 LABEL creator="Zach Lamberty <zach.lamberty@elderresearch.com>"
 LABEL maintainer="Andrew Stewart <andrew.stewart@elderresearch.com>"
 
-RUN apt update && apt -y install locales
-RUN locale-gen en_US.UTF-8
+ARG DEBIAN_FRONTEND=noninteractive
+
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
+RUN apt update && apt -y install locales
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && /usr/sbin/update-locale LANG=en_US.UTF-8
+
 # add microsoft repository for mssql
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-        && curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        && curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
 # install mssql drivers
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
@@ -23,7 +28,7 @@ RUN apt-get install -y openssh-server swig unixodbc-dev libpq-dev \
 	&& apt-get install -y graphviz libicu-dev
 
 # install nodejs
-RUN apt-get install -y python-software-properties \
+RUN apt-get install -y software-properties-common \
     && curl -sL https://deb.nodesource.com/setup_10.x | bash - \
     && apt-get install -y nodejs \
     && apt-get purge -y python-software-properties
@@ -74,6 +79,7 @@ RUN python3 -m pip --no-cache-dir install \
         sqlalchemy \
         tables \
         tqdm \
+        virtualenv \
         xlrd
 
 RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
@@ -83,8 +89,7 @@ RUN python3 -m pip --no-cache-dir install jupyterlab ipywidgets ipympl \
     && jupyter labextension install jupyter-matplotlib
 
 # pytorch is also special, install from a wheel on their webpage
-RUN pip --no-cache-dir install http://download.pytorch.org/whl/cu100/torch-1.1.0-cp35-cp35m-linux_x86_64.whl
-RUN pip install torchvision
+RUN pip --no-cache-dir install torch==1.2.0 torchvision
 
 # onnx requires some additional *nix libraries
 RUN apt-get update && \
@@ -100,7 +105,7 @@ RUN apt-get install --no-install-recommends -y less git vim
 
 # install spacy `en` model and set relevant environment variables
 # c.f. https://github.com/explosion/spaCy/issues/1721
-RUN python3 -m spacy download en 
+RUN python3 -m spacy download en
 RUN python3 -m spacy download en_core_web_lg
 
 # download some of the nltk libraries
