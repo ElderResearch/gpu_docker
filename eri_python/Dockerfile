@@ -56,7 +56,7 @@ RUN python3 -m pip --no-cache-dir install pybind11 \
 RUN python3 -m pip --no-cache-dir install \
         boto3 \
         cssselect \
-	dask \
+        dask \
         gensim \
         ipykernel \
         jupyter \
@@ -75,15 +75,15 @@ RUN python3 -m pip --no-cache-dir install \
         pyarrow \
         pyproj \
         pyodbc \
-	rasterio \
+        rasterio \
         requests \
         richdem \
         seaborn \
         smac \
         spacy \
         sqlalchemy \
-        tables \
-	toolz \
+        tables \    
+        toolz \
         tqdm \
         virtualenv \
         xarray \
