@@ -82,6 +82,7 @@ RUN python3 -m pip --no-cache-dir install \
         spacy \
         sqlalchemy \
         tables \
+	toolz \
         tqdm \
         virtualenv \
         xarray \
