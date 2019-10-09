@@ -56,6 +56,7 @@ RUN python3 -m pip --no-cache-dir install pybind11 \
 RUN python3 -m pip --no-cache-dir install \
         boto3 \
         cssselect \
+	dask \
         gensim \
         ipykernel \
         jupyter \
