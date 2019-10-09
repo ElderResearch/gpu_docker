@@ -63,6 +63,7 @@ RUN python3 -m pip --no-cache-dir install \
         lxml \
         matplotlib \
         neo4j-driver \
+        netcdf4 \
         networkx \
         nltk \
         numba \
@@ -71,8 +72,10 @@ RUN python3 -m pip --no-cache-dir install \
         plotly \
         psycopg2 \
         pyarrow \
+        pyproj \
         pyodbc \
         requests \
+        richdem \
         seaborn \
         smac \
         spacy \
@@ -80,6 +83,7 @@ RUN python3 -m pip --no-cache-dir install \
         tables \
         tqdm \
         virtualenv \
+        xarray \
         xlrd
 
 # install GDAL
