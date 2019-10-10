@@ -56,6 +56,7 @@ RUN python3 -m pip --no-cache-dir install pybind11 \
 RUN python3 -m pip --no-cache-dir install \
         boto3 \
         cssselect \
+        dask \
         gensim \
         ipykernel \
         jupyter \
@@ -63,6 +64,7 @@ RUN python3 -m pip --no-cache-dir install \
         lxml \
         matplotlib \
         neo4j-driver \
+        netcdf4 \
         networkx \
         nltk \
         numba \
@@ -71,15 +73,20 @@ RUN python3 -m pip --no-cache-dir install \
         plotly \
         psycopg2 \
         pyarrow \
+        pyproj \
         pyodbc \
+        rasterio \
         requests \
+        richdem \
         seaborn \
         smac \
         spacy \
         sqlalchemy \
-        tables \
+        tables \    
+        toolz \
         tqdm \
         virtualenv \
+        xarray \
         xlrd
 
 # install GDAL
