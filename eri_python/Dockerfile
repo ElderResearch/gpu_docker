@@ -89,6 +89,16 @@ RUN python3 -m pip --no-cache-dir install \
         xarray \
         xlrd
 
+# install lightgbm
+RUN apt-get update && apt-get install -y cmake \
+	ocl-icd-libopencl1 \
+	ocl-icd-opencl-dev \
+	libboost-dev \
+	libboost-system-dev \
+	libboost-filesystem-dev
+
+RUN python3 -m pip install lightgbm --install-option=--gpu
+
 # install GDAL
 
 RUN apt-get update && apt-get install -y gdal-bin libgdal-dev 
