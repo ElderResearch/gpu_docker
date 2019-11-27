@@ -125,7 +125,7 @@ RUN python3 -m ipykernel.kernelspec
 
 # finally, not python stuff, but I want the following stuff to be generally
 # available in all downstream images
-RUN apt-get update && apt-get install --no-install-recommends -y less git vim emacs
+RUN apt-get install --no-install-recommends -y less git vim
 
 # install spacy `en` model and set relevant environment variables
 # c.f. https://github.com/explosion/spaCy/issues/1721
