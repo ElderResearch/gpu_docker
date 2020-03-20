@@ -37,7 +37,7 @@ file_handler.setFormatter(logging.Formatter('%(asctime)s: %(message)s'))
 logger.addHandler(file_handler)
 
 # do not rearrange these!
-build_order = ['eri_python', 'eri_dev', 'eri_python_r', 'eri_dev_p_r']
+build_order = ['python', 'eri_python_r', 'eri_dev_p_r']
 
 def main(build_dict):
     logger.info('BUILD STARTED BY %s\n', os.getenv('USER', 'unknown'))
@@ -54,7 +54,7 @@ def main(build_dict):
     )
     for image in build_order:
         d = build_dict.copy()
-        d['tag'] = image + ':' + build_dict['tag']
+        d['tag'] = 'eri/' + image + ':' + build_dict['tag']
         d['path'] = op.join(_base_dir, image)
         if dry_run:
             logger.info('DRY RUN: Building image %s', d['tag'])
