@@ -176,3 +176,6 @@ RUN apt-get install --no-install-recommends -y libgsl-dev \
         && rm -rf /var/lib/apt/lists/* \
         && rm -rf /usr/share/python-wheels/ \
         && rm -rf /root/.cache/
+
+# install sqlite3
+RUN apt-get update && apt-get install -y sqlite3 libsqlite3-dev

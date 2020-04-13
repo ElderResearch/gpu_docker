@@ -16,7 +16,7 @@
 #
 # obviously, replace the `-u` line above with desired user information
 
-FROM eri_python:latest
+FROM eri_python:test
 
 # expose jupyter lab and set up the port forwarding
 EXPOSE 8888
